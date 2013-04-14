@@ -1,0 +1,21 @@
+{
+    "name": "jasongrimes/silex-simpleuser",
+    "type": "library",
+    "description": "A simple database-backed user provider for Silex, with associated services and controllers.",
+    "keywords": ["silex", "user", "user provider", "simple user provider"],
+    "homepage": "http://github.com/jasongrimes/silex-simpleuser",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jason Grimes",
+            "email": "jason@grimesit.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+        "psr-0": {"SimpleUser": "src/"}
+    }
+}
+
