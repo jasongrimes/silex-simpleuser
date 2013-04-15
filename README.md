@@ -61,7 +61,7 @@ This provides access to the following services:
 Configuring the user provider
 -----------------------------
 
-In the security provider firewall configuration, set the `users` key to the `user.manager` service defined by the `UserServiceProvider` in the [installation](#Installation) step.
+In the security provider firewall configuration, set the `users` key to the `user.manager` service defined by the `UserServiceProvider` in the [installation](#installation) step.
 
     $app->register(new Provider\SecurityServiceProvider(), array(
         'security.firewalls' => array(
