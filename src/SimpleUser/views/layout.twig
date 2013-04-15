@@ -10,6 +10,11 @@
         {% endblock %}
     </head>
     <body>
+        {% if app.session.flashbag.has('alert') %}
+            {% for flashMessage in app.session.flashbag.get('alert') %}
+                <div class="alert">{{ flashMessage }}</div>
+            {% endfor %}
+        {% endif %}
         <div id="content">{% block content %}{% endblock %}</div>
     </body>
 </html>
