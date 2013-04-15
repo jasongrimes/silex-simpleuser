@@ -173,4 +173,29 @@ class User implements UserInterface
         // No-op, required by UserInterface. We never store the plain text credentials in this object.
     }
 
+    public function validate()
+    {
+        $errors = array();
+
+        if (!$this->getEmail()) {
+            $errors['email'] = 'Email address is required.';
+        } else if (!strpos($this->getEmail(), '@')) {
+            // Basic email format sanity check. Real validation comes from sending them an email with a link they have to click.
+            $errors['email'] = 'Email address appears to be invalid.';
+        } else if (strlen($this->getEmail()) > 100) {
+            $errors['email'] = 'Email address can\'t be longer than 100 characters.';
+        }
+
+        if (!$this->getPassword()) {
+            $errors['password'] = 'Password is required.';
+        } else if (strlen($this->getPassword()) > 255) {
+            $errors['password'] = 'Password can\'t be longer than 255 characters.';
+        }
+
+        if (strlen($this->getName()) > 100) {
+            $errors['name'] = 'Name can\'t be longer than 100 characters.';
+        }
+
+        return $errors;
+    }
 }
