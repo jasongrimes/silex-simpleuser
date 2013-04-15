@@ -29,11 +29,6 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         $app['user.controller'] = $app->share(function ($app) {
             return new UserController($app['user.manager']);
         });
-
-        // Add twig template path.
-        if ($app->offsetExists('twig.loader.filesystem')) {
-            $app['twig.loader.filesystem']->addPath(__DIR__ . '/views/', 'user');
-        }
     }
 
     /**
@@ -45,6 +40,10 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
      */
     public function boot(Application $app)
     {
+        // Add twig template path.
+        if ($app->offsetExists('twig.loader.filesystem')) {
+            $app['twig.loader.filesystem']->addPath(__DIR__ . '/views/', 'user');
+        }
     }
 
 
