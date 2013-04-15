@@ -4,10 +4,13 @@
 
 {% block content %}
 
-    {% if is_granted('ROLE_USER') %}
-        <p>Hello, {{ app.user.name }}.</p>
+    {% if app.user %}
+        <p>Hello, {{ app.user.name|escape }}.</p>
         <p><a href="{{ path('user.logout') }}">Sign out</a></p>
+
     {% else %}
+        <h2>Sign in</h2>
+
         {% if error %}
             <div class="alert alert-error">{{ error }}</div>
         {% endif %}
