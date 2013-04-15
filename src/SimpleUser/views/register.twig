@@ -1,0 +1,58 @@
+{% extends layout_template  %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+
+    {% if app.user %}
+        <p>Hello, {{ app.user.name|escape }}. You are already registered and signed in.</p>
+        <p><a href="{{ path('user.logout') }}">Sign out</a></p>
+
+    {% else %}
+        <h2>Create an account</h2>
+
+        {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form class="form-horizontal" method="POST">
+
+            <div class="control-group">
+                <label class="control-label" for="input-name">Name</label>
+                <div class="controls">
+                    <input name="name" type="text" id="input-name" placeholder="Name" value="{{ name|escape }}">
+                    <span class="help-inline">Shown publicly</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="input-email">Email</label>
+                <div class="controls">
+                    <input name="email" type="text" id="input-email" placeholder="Email" value="{{ email|escape }}">
+                    <span class="help-inline">Never shared</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="input-password">Password</label>
+                <div class="controls">
+                    <input name="password" type="password" id="input-password" placeholder="Password">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="input-confirm-password">Confirm password</label>
+                <div class="controls">
+                    <input name="confirm_password" type="password" id="input-confirm-password" placeholder="Confirm password">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="controls">
+                    <button type="submit" class="btn">Register</button>
+                </div>
+            </div>
+        </form>
+
+    {% endif %}
+{% endblock %}
