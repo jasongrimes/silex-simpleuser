@@ -113,7 +113,9 @@ class UserManager implements UserProviderInterface
     {
         $user = new User($email);
 
-        $this->setUserPassword($user, $plainPassword);
+        if (!empty($plainPassword)) {
+            $this->setUserPassword($user, $plainPassword);
+        }
 
         if ($name !== null) {
             $user->setName($name);
