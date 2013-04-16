@@ -8,9 +8,9 @@ In addition to the user provider, this package also includes a controller provid
 Requirements
 ------------
 
-This service depends on the [DoctrineServiceProvider](http://silex.sensiolabs.org/doc/providers/doctrine.html).
+This service depends on Doctrine DBAL from the [DoctrineServiceProvider](http://silex.sensiolabs.org/doc/providers/doctrine.html).
 
-Enable it something like this:
+Enable Doctrine something like this:
 
     use Silex\Provider;
 
@@ -24,12 +24,12 @@ Enable it something like this:
         ),
     ));
 
-To use the optional controller provider to set up simple routes and controllers for form-based authentication and user management,
-the [Session](http://silex.sensiolabs.org/doc/providers/session.html),
+Some additional providers are required if you want to use the optional controller provider
+to set up simple routes and controllers for form-based authentication and user management:
+[Session](http://silex.sensiolabs.org/doc/providers/session.html),
 [Service Controller](http://silex.sensiolabs.org/doc/providers/service_controller.html),
 [Url Generator](http://silex.sensiolabs.org/doc/providers/url_generator.html),
-and [Twig](http://silex.sensiolabs.org/doc/providers/twig.html)
-service providers are required.
+and [Twig](http://silex.sensiolabs.org/doc/providers/twig.html).
 
 Enable them like this:
 
@@ -74,10 +74,10 @@ In the security provider firewall configuration, set the `users` key to the `use
         ),
     ));
 
-Configuring the optional form-based user routes
------------------------------------------------
+Using the controller provider
+-----------------------------
 
-In addition to registering services, the `SimpleUser\UserServiceProvider` can also be used to define routes for logging in and managing users. 
+In addition to registering services, the `SimpleUser\UserServiceProvider` can also be used to define routes for logging in and managing users.
 
 You can mount the user routes like this:
 
@@ -90,6 +90,8 @@ This provides the following routes. (In this example they are mounted under `/us
 * `POST /user/login_check` (route name: `user.login_check`): Process the login submission. The login form POSTs here.
 * `GET /user/logout` (route name: `user.logout`): Log out the current user.
 * `GET|POST /user/register` (route name: `user.register`): Form to create a new user.
+* `GET /user/{id}` (route name: `user.view`): View a user.
+* `GET|POST /user/{id}/edit` (route name: `user.edit`): Edit a user.
 
 Configure the firewall to use these routes for form-based authentication. (Replace `/user` with whatever mount point you used in `mount()` above).
 
