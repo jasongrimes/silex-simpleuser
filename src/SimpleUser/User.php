@@ -150,6 +150,16 @@ class User implements UserInterface
         return $this->name;
     }
 
+    /**
+     * Returns the name, if set, or else "Anonymous {id}".
+     *
+     * @return string
+     */
+    public function getDisplayName()
+    {
+        return $this->name ?: 'Anonymous ' . $this->id;
+    }
+
     public function setTimeCreated($timeCreated)
     {
         $this->timeCreated = $timeCreated;
@@ -198,4 +208,5 @@ class User implements UserInterface
 
         return $errors;
     }
+
 }
