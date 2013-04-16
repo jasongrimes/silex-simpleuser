@@ -102,6 +102,25 @@ class UserController
         return $app['twig']->render('@user/view.twig', array(
             'layout_template' => $this->layoutTemplate,
             'user' => $user,
+            'imageUrl' => $this->getGravatarUrl($user->getEmail()),
+        ));
+
+    }
+
+    protected function getGravatarUrl($email, $size = 80)
+    {
+        // See https://en.gravatar.com/site/implement/images/ for available options.
+        return '//www.gravatar.com/avatar/' . md5(strtolower(trim($email))) . '?s=' . $size . '&d=identicon';
+    }
+
+    public function editAction(Application $app, Request $request, $id)
+    {
+        $user = $this->userManager->getUser($id);
+
+        return $app['twig']->render('@user/view.twig', array(
+            'layout_template' => $this->layoutTemplate,
+            'user' => $user,
+            'imageUrl' => $this->getGravatarUrl($user->getEmail()),
         ));
 
     }

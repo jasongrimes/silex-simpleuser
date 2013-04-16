@@ -1,9 +1,20 @@
 {% extends layout_template  %}
 
-{% block title %}View user {{ user.name }}{% endblock %}
+{% block title %}View user {{ user.displayName|escape }}{% endblock %}
 
 {% block content %}
 
-    {{ dump(user) }}
+<div class="media">
+    <img class="media-object pull-left" src="{{ imageUrl }}" width="80" height="80">
+    <div class="media-body">
+        <h2 class="media-heading">{{ user.displayName|escape }}</h2>
+        <span class="muted">User ID: {{ user.id }}</span>
+    </div>
+</div>
+
+test:
+{% if is_granted('EDIT_USER', user) %}
+    Can edit user
+{% endif %}
 
 {% endblock %}
