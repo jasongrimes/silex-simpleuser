@@ -7,6 +7,9 @@ use Silex\ServiceProviderInterface;
 use Silex\ControllerProviderInterface;
 use Silex\ControllerCollection;
 use Silex\ServiceControllerResolver;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Authorization\Voter\RoleHierarchyVoter;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class UserServiceProvider implements ServiceProviderInterface, ControllerProviderInterface
 {
@@ -29,6 +32,19 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         $app['user.controller'] = $app->share(function ($app) {
             return new UserController($app['user.manager']);
         });
+
+        // Add a custom security voter to support testing user attributes.
+        $app['security.voters'] = $app->extend('security.voters', function($voters) use ($app) {
+            foreach ($voters as $voter) {
+                if ($voter instanceof RoleHierarchyVoter) {
+                    $roleHierarchyVoter = $voter;
+                    break;
+                }
+            }
+            $voters[] = new EditUserVoter($roleHierarchyVoter);
+            return $voters;
+        });
+
     }
 
     /**
@@ -44,8 +60,8 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         if ($app->offsetExists('twig.loader.filesystem')) {
             $app['twig.loader.filesystem']->addPath(__DIR__ . '/views/', 'user');
         }
-    }
 
+    }
 
     /**
      * Returns routes to connect to the given application.
@@ -65,17 +81,37 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         /** @var ControllerCollection $controllers */
         $controllers = $app['controllers_factory'];
 
-        $controllers->match('/register', 'user.controller:registerAction')->bind('user.register')->method('GET|POST');
-        $controllers->get('/', 'user.controller:listAction')->bind('user.list');
-        $controllers->get('/{id}', 'user.controller:viewAction')->bind('user.view')->assert('id', '\d+');
-        $controllers->match('/{id}/edit', 'user.controller:editAction')->bind('user.edit')->method('GET|POST');
+        $controllers->method('GET|POST')->match('/register', 'user.controller:registerAction')
+            ->bind('user.register');
 
-        $controllers->get('/login', 'user.controller:loginAction')->bind('user.login');
-        $controllers->match('/reset-password', 'user.controller:resetPasswordAction')->bind('user.reset_password')->method('GET|POST');
+
+        $controllers->get('/', 'user.controller:listAction')
+            ->bind('user.list');
+
+        $controllers->get('/{id}', 'user.controller:viewAction')
+            ->bind('user.view')
+            ->assert('id', '\d+');
+
+        $controllers->method('GET|POST')->match('/{id}/edit', 'user.controller:editAction')
+            ->bind('user.edit')
+            ->before(function(Request $request) use ($app) {
+                if (!$app['security']->isGranted('EDIT_USER_ID', $request->get('id'))) {
+                    throw new AccessDeniedException();
+                }
+            });
+
+        $controllers->get('/login', 'user.controller:loginAction')
+            ->bind('user.login');
+
+        $controllers->method('GET|POST')->match('/reset-password', 'user.controller:resetPasswordAction')
+            ->bind('user.reset_password');
 
         // Dummy routes so we can use the names. The security provider intercepts these so no controller is needed.
-        $controllers->match('/login_check', function() {})->bind('user.login_check');
-        $controllers->get('/logout', function() {})->bind('user.logout');
+        $controllers->method('GET|POST')->match('/login_check', function() {})
+            ->bind('user.login_check');
+
+        $controllers->get('/logout', function() {})
+            ->bind('user.logout');
 
         return $controllers;
     }
