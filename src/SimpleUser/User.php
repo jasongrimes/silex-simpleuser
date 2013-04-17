@@ -4,6 +4,11 @@ namespace SimpleUser;
 
 use Symfony\Component\Security\Core\User\UserInterface;
 
+/**
+ * A simple User model.
+ *
+ * @package SimpleUser
+ */
 class User implements UserInterface
 {
     protected $id;
@@ -14,6 +19,11 @@ class User implements UserInterface
     protected $name = '';
     protected $timeCreated;
 
+    /**
+     * Constructor.
+     *
+     * @param string $email
+     */
     public function __construct($email)
     {
         $this->email = $email;
@@ -22,26 +32,25 @@ class User implements UserInterface
     }
 
     /**
-     * Returns the roles granted to the user.
+     * Returns the roles granted to the user. Note that all users have the ROLE_USER role.
      *
-     * <code>
-     * public function getRoles()
-     * {
-     *     return array('ROLE_USER');
-     * }
-     * </code>
-     *
-     * Alternatively, the roles might be stored on a ``roles`` property,
-     * and populated in any number of different ways when the user object
-     * is created.
-     *
-     * @return Role[] The user roles
+     * @return array A list of the user's roles.
      */
     public function getRoles()
     {
-        return $this->roles;
+        $roles = $this->roles;
+
+        // Every user must have at least one role, per Silex security docs.
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
     }
 
+    /**
+     * Set the user's roles to the given list.
+     *
+     * @param array $roles
+     */
     public function setRoles(array $roles)
     {
         $this->roles = array();
@@ -49,60 +58,98 @@ class User implements UserInterface
         foreach ($roles as $role) {
             $this->addRole($role);
         }
-
-        return $this;
     }
 
+    /**
+     * Test whether the user has the given role.
+     *
+     * @param string $role
+     * @return bool
+     */
     public function hasRole($role)
     {
         return in_array(strtoupper($role), $this->roles, true);
     }
 
+    /**
+     * Add the given role to the user.
+     *
+     * @param string $role
+     */
     public function addRole($role)
     {
+        $role = strtoupper($role);
+
+        if ($role === 'ROLE_USER') {
+            return;
+        }
+
         if (!$this->hasRole($role)) {
-            $this->roles[] = strtoupper($role);
+            $this->roles[] = $role;
         }
     }
 
+    /**
+     * Remove the given role from the user.
+     *
+     * @param string $role
+     */
     public function removeRole($role)
     {
         if (false !== $key = array_search(strtoupper($role), $this->roles, true)) {
             unset($this->roles[$key]);
             $this->roles = array_values($this->roles);
         }
-
-        return $this;
     }
 
+    /**
+     * Set the user ID.
+     *
+     * @param int $id
+     */
     public function setId($id)
     {
         $this->id = $id;
     }
 
+    /**
+     * Get the user ID.
+     *
+     * @return int
+     */
     public function getId()
     {
         return $this->id;
     }
 
     /**
-     * Returns the password used to authenticate the user.
+     * Get the encoded password used to authenticate the user.
      *
-     * This should be the encoded password. On authentication, a plain-text
-     * password will be salted, encoded, and then compared to this value.
+     * On authentication, a plain-text password will be salted,
+     * encoded, and then compared to this value.
      *
-     * @return string The password
+     * @return string The encoded password.
      */
     public function getPassword()
     {
         return $this->password;
     }
 
+    /**
+     * Set the encoded password.
+     *
+     * @param string $password
+     */
     public function setPassword($password)
     {
         $this->password = $password;
     }
 
+    /**
+     * Set the salt that should be used to encode the password.
+     *
+     * @param string $salt
+     */
     public function setSalt($salt)
     {
         $this->salt = $salt;
@@ -121,7 +168,9 @@ class User implements UserInterface
     }
 
     /**
-     * Returns the username used to authenticate the user.
+     * Returns the email address, which serves as the username used to authenticate the user.
+     *
+     * This method is required by the UserInterface.
      *
      * @return string The username
      */
@@ -130,21 +179,33 @@ class User implements UserInterface
         return $this->email;
     }
 
+    /**
+     * @return string The user's email address.
+     */
     public function getEmail()
     {
         return $this->email;
     }
 
+    /**
+     * @param string $email
+     */
     public function setEmail($email)
     {
         $this->email = $email;
     }
 
+    /**
+     * @param string $name
+     */
     public function setName($name)
     {
         $this->name = $name;
     }
 
+    /**
+     * @return string
+     */
     public function getName()
     {
         return $this->name;
@@ -160,11 +221,21 @@ class User implements UserInterface
         return $this->name ?: 'Anonymous ' . $this->id;
     }
 
+    /**
+     * Set the time the user was originally created.
+     *
+     * @param int $timeCreated A timestamp value.
+     */
     public function setTimeCreated($timeCreated)
     {
         $this->timeCreated = $timeCreated;
     }
 
+    /**
+     * Set the time the user was originally created.
+     *
+     * @return int
+     */
     public function getTimeCreated()
     {
         return $this->timeCreated;
@@ -173,16 +244,20 @@ class User implements UserInterface
     /**
      * Removes sensitive data from the user.
      *
-     * This is important if, at any given point, sensitive information like
-     * the plain-text password is stored on this object.
+     * This is a no-op, since we never store the plain text credentials in this object.
+     * It's required by UserInterface.
      *
      * @return void
      */
     public function eraseCredentials()
     {
-        // No-op, required by UserInterface. We never store the plain text credentials in this object.
     }
 
+    /**
+     * Validate the user object.
+     *
+     * @return array An array of error messages, or an ampty array if there were no errors.
+     */
     public function validate()
     {
         $errors = array();
