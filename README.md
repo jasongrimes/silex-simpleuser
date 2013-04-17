@@ -5,10 +5,45 @@ A simple database-backed user provider for use with the Silex [SecurityServicePr
 
 In addition to the user provider, this package also includes a controller provider that can optionally set up simple routes and controllers for form-based authentication.
 
+Overview
+--------
+
+SimpleUser is intended to be an easy way to get up and running with user authentication in the Silex PHP microframework.
+Silex has built-in support for the Symfony 2 Security component, which is powerful,
+but requires writing a lot of boilerplate user management code before it can be used.
+SimpleUser provides a simple implementation of this missing user management piece for the Security component.
+
+If your Silex application just needs a user authentication layer with a minimal user model,
+SimpleUser may work fine for you as-is.
+If you have more complex requirements, you may want to extend the SimpleUser classes,
+or you may prefer to fork the project and use it as a reference implementation.
+You should feel free to do either one (this is open source software under the BSD license).
+
+The SimpleUser package provides the following features:
+
+* A minimal `User` class which basically consists of an email, password, optional name, and some housekeeping.
+* A `UserManager` class for managing `User` objects and their persistence in a SQL database. It serves as a user provider for the Security component.
+* A `user` service for accessing the currently logged in user.
+* A `UserController` and views for for handling form-based authentication and user management.
+* An `EditUserVoter` class which provides security attributes (access control privileges) for managing users.
+* A Silex service provider and controller provider for automatically configuring the features above.
+
 Requirements
 ------------
 
 This service depends on Doctrine DBAL from the [DoctrineServiceProvider](http://silex.sensiolabs.org/doc/providers/doctrine.html).
+
+In addition, if you want to use the optional controller provider to set up simple routes for form-based authentication and user management,
+the [Session](http://silex.sensiolabs.org/doc/providers/session.html),
+[Service Controller](http://silex.sensiolabs.org/doc/providers/service_controller.html),
+[Url Generator](http://silex.sensiolabs.org/doc/providers/url_generator.html),
+and [Twig](http://silex.sensiolabs.org/doc/providers/twig.html) service providers are also required.
+
+These all come with the stock Silex distribution except for Twig, which must be added as a dependency in `composer.json` like this:
+
+    "require": {
+        "symfony/twig-bridge": "~2.1"
+    }
 
 Enable Doctrine something like this:
 
@@ -24,22 +59,15 @@ Enable Doctrine something like this:
         ),
     ));
 
-Some additional providers are required if you want to use the optional controller provider
-to set up simple routes and controllers for form-based authentication and user management:
-[Session](http://silex.sensiolabs.org/doc/providers/session.html),
-[Service Controller](http://silex.sensiolabs.org/doc/providers/service_controller.html),
-[Url Generator](http://silex.sensiolabs.org/doc/providers/url_generator.html),
-and [Twig](http://silex.sensiolabs.org/doc/providers/twig.html).
-
-Enable them like this:
+Enable the additional service providers like this:
 
     $app->register(new Provider\SessionServiceProvider()); 
     $app->register(new Provider\ServiceControllerServiceProvider()); 
     $app->register(new Provider\UrlGeneratorServiceProvider()); 
-    $app->register(new Provider\TwigServiceProvider()); 
+    $app->register(new Provider\TwigServiceProvider());
 
-Installation
-------------
+Installing SimpleUser
+---------------------
 
 Add this dependency to your `composer.json` file:
 
@@ -53,13 +81,13 @@ Register the service in your Silex application:
 
     $app->register(new SimpleUser\UserServiceProvider());
 
-This provides access to the following services:
+The following services will now be available:
 
-* `user.manager`: Implements the Symfony Security component's `UserProviderInterface`, along with other user management functions.
-* `user`: A `SimpleUser\User` instance for the user authenticated in the current request, or `null` if the user is not logged in.
+* `user.manager`: A service for managing User instances.
+* `user`: A User instance representing the currently authenticated user (or `null` if the user is not logged in).
 
-Configuring the user provider
------------------------------
+Configuring the Security service to use the SimpleUser user provider
+--------------------------------------------------------------------
 
 To configure the Silex security service to use the `SimpleUser\UserManager` as its user provider, 
 set the `users` key to the `user.manager` service like this:
@@ -144,5 +172,4 @@ In a Twig template, use them like this:
     {% if is_granted('EDIT_USER', user) %}
         ...
     {% endif %}
-
 
