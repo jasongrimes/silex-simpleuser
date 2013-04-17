@@ -4,7 +4,7 @@
     "description": "A simple database-backed user provider for Silex, with associated services and controllers.",
     "keywords": ["silex", "user", "user provider", "simple user provider"],
     "homepage": "http://github.com/jasongrimes/silex-simpleuser",
-    "license": "MIT",
+    "license": "BSD-3-Clause",
     "authors": [
         {
             "name": "Jason Grimes",
