@@ -22,7 +22,7 @@ You should feel free to do either one (this is open source software under the BS
 The SimpleUser package provides the following features:
 
 * A minimal `User` class which basically consists of an email, password, optional name, and some housekeeping.
-* A `UserManager` class for managing `User` objects and their persistence in a SQL database. It serves as a user provider for the Security component.
+* A `UserManager` class for managing `User` objects and their persistence in an SQL database. It serves as a user provider for the Security component.
 * A `user` service for accessing the currently logged in user.
 * A `UserController` and views for for handling form-based authentication and user management.
 * An `EditUserVoter` class which provides security attributes (access control privileges) for managing users.
@@ -31,7 +31,8 @@ The SimpleUser package provides the following features:
 Requirements
 ------------
 
-This service depends on Doctrine DBAL from the [DoctrineServiceProvider](http://silex.sensiolabs.org/doc/providers/doctrine.html).
+SimpleUser depends on the [DoctrineServiceProvider](http://silex.sensiolabs.org/doc/providers/doctrine.html).
+(This provides a basic DBAL--database abstraction layer--not the full Doctrine 2 ORM.)
 
 In addition, if you want to use the optional controller provider to set up simple routes for form-based authentication and user management,
 the [Session](http://silex.sensiolabs.org/doc/providers/session.html),
@@ -49,15 +50,7 @@ Enable Doctrine something like this:
 
     use Silex\Provider;
 
-    $app->register(new Provider\DoctrineServiceProvider(), array(
-        'db.options' => array(
-            'driver'   => 'pdo_mysql',
-            'dbname' => $config['db_master']['dbname'],
-            'host' => $config['db_master']['host'],
-            'user' => $config['db_master']['user'],
-            'password' => $config['db_master']['pass'],
-        ),
-    ));
+    $app->register(new Provider\DoctrineServiceProvider(), array('db.options' => $config['db']));
 
 Enable the additional service providers like this:
 
@@ -79,7 +72,9 @@ Create the users database in MySQL (after downloading the package with composer)
 
 Register the service in your Silex application:
 
-    $app->register(new SimpleUser\UserServiceProvider());
+
+    $userServiceProvider = new SimpleUser\UserServiceProvider();
+    $app->register($userServiceProvider);
 
 The following services will now be available:
 
@@ -110,8 +105,9 @@ It defines some routes that can be used for logging in and managing users.
 
 You can mount the user routes like this:
 
-    $app->register($u = new SimpleUser\UserServiceProvider());
-    $app->mount('/user', $u);
+    $userServiceProvider = new SimpleUser\UserServiceProvider();
+    $app->register($userServiceProvider);
+    $app->mount('/user', $userServiceProvider);
 
 The following routes are provided. (In this example they are mounted under `/user`, but that can be changed by altering the `mount()` parameter above.)
 
