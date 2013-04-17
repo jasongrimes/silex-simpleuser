@@ -80,6 +80,7 @@ The following services will now be available:
 
 * `user.manager`: A service for managing User instances.
 * `user`: A User instance representing the currently authenticated user (or `null` if the user is not logged in).
+* `user.controller`: A controller with actions for handling user management routes. See "Using the controller provider" below.
 
 Configuring the Security service to use the SimpleUser user provider
 --------------------------------------------------------------------
@@ -105,18 +106,21 @@ It defines some routes that can be used for logging in and managing users.
 
 You can mount the user routes like this:
 
+    // Register SimpleUser services.
     $userServiceProvider = new SimpleUser\UserServiceProvider();
     $app->register($userServiceProvider);
+
+    // Mount SimpleUser routes.
     $app->mount('/user', $userServiceProvider);
 
 The following routes are provided. (In this example they are mounted under `/user`, but that can be changed by altering the `mount()` parameter above.)
 
-* `GET /user/login` (route name: `user.login`): The login form.
-* `POST /user/login_check` (route name: `user.login_check`): Process the login submission. The login form POSTs here.
-* `GET /user/logout` (route name: `user.logout`): Log out the current user.
-* `GET|POST /user/register` (route name: `user.register`): Form to create a new user.
-* `GET /user/{id}` (route name: `user.view`): View a user.
-* `GET|POST /user/{id}/edit` (route name: `user.edit`): Edit a user.
+* `/user/login` (route name: `user.login`): The login form.
+* `/user/login_check` (route name: `user.login_check`): Process the login submission. The login form POSTs here.
+* `/user/logout` (route name: `user.logout`): Log out the current user.
+* `/user/register` (route name: `user.register`): Form to create a new user.
+* `/user/{id}` (route name: `user.view`): View a user.
+* `/user/{id}/edit` (route name: `user.edit`): Edit a user.
 
 Configure the firewall to use these routes for form-based authentication. (Replace `/user` with whatever mount point you used in `mount()` above).
 
@@ -128,11 +132,9 @@ Configure the firewall to use these routes for form-based authentication. (Repla
                 'form' => array(
                     'login_path' => '/user/login',
                     'check_path' => '/user/login_check',
-                    // 'default_target_path' => '/user/demo', // Redirect here after logging in if no other route was requested. Defaults to '/'
                 ),
                 'logout' => array(
                     'logout_path' => '/user/logout',
-                    // 'target_url' => '/user/demo', // Redirect here after logging out. Defaults to '/'.
                 ),
                 'users' => $app->share(function($app) { return $app['user.manager']; }),
             ),
