@@ -209,7 +209,7 @@ class UserManager implements UserProviderInterface
             return false;
         }
 
-        return $this->app['security']->isGranted('IS_AUTHENTICATED_FULLY');
+        return $this->app['security']->isGranted('IS_AUTHENTICATED_REMEMBERED');
     }
 
     /**
