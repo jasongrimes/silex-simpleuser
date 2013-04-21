@@ -80,7 +80,7 @@ Create the user database:
 
 You should now be able to create an account at the `/user/register` URL.
 Make the new account an administrator by editing the record directly in the database and setting the `users.roles` column to `ROLE_USER,ROLE_ADMIN`.
-(After you have one admin account, it can make grant the admin role to others via the web interface.)
+(After you have one admin account, it can grant the admin role to others via the web interface.)
 
 Alternately, you can create an admin account with the user manager:
 
