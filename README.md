@@ -173,6 +173,13 @@ You can mount the user routes like this:
 
 The following routes are provided. (In this example they are mounted under `/user`, but that can be changed by altering the `mount()` parameter above.)
 
+<table>
+  <tr>
+    <th>Route path</th>
+    <th>Route name</th>
+    <th>&nbsp;</th>
+  </tr>
+</table>
 | Route path          | Route name         | |
 |---------------------|--------------------| |
 | `/user/login`       | `user.login`       | The login form. |
