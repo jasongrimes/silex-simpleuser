@@ -125,7 +125,7 @@ class UserController
             $request->request->get('password'),
             $request->request->get('name') ?: null);
 
-        $errors = $this->user_manager->validate();
+        $errors = $this->userManager->validate($user);
         if (!empty($errors)) {
             throw new InvalidArgumentException(implode('<br>', $errors));
         }
