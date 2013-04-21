@@ -68,6 +68,7 @@ class UserController
             'layout_template' => $this->layoutTemplate,
             'error' => $app['security.last_error']($request),
             'last_username' => $app['session']->get('_security.last_username'),
+            'allowRememberMe' => isset($app['security.remember_me.response_listener']),
         ));
     }
 
