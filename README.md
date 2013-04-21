@@ -28,6 +28,60 @@ The SimpleUser package provides the following features:
 * An `EditUserVoter` class which provides security attributes (access control privileges) for managing users.
 * A Silex service provider and controller provider for automatically configuring the features above.
 
+Quick start example config
+--------------------------
+
+This configuration should work out of the box to get you up and running quickly. See below for additional details.
+
+Add this to your composer.json and then run `composer update`:
+
+
+    "require": {
+        "symfony/twig-bridge": "~2.1",
+        "jasongrimes/silex-simpleuser": "dev-master"
+    }
+
+Add this to your Silex application: 
+
+    use Silex\Provider;
+
+    // TODO: Replace $config['db'] with your own database configuration information.
+    $app->register(new Provider\DoctrineServiceProvider(), array('db.options' => $config['db']));
+
+    $app->register(new Provider\RememberMeServiceProvider());
+    $app->register(new Silex\Provider\SecurityServiceProvider(), array(
+        'security.firewalls' => array(
+            'your_firewall_name' => array(
+                'pattern' => '^.*$',
+                'anonymous' => true,
+                'remember_me' => array(),
+                'form' => array(
+                    'login_path' => '/user/login',
+                    'check_path' => '/user/login_check',
+                ),
+                'logout' => array(
+                    'logout_path' => '/user/logout',
+                ),
+                'users' => $app->share(function($app) { return $app['user.manager']; }),
+            ),
+        ),
+    ));
+
+    // These services are only required for the optional SimpleUser controller provider
+    $app->register(new Provider\SessionServiceProvider()); 
+    $app->register(new Provider\ServiceControllerServiceProvider()); 
+    $app->register(new Provider\UrlGeneratorServiceProvider()); 
+    $app->register(new Provider\TwigServiceProvider());
+
+    $app->register($u = new SimpleUser\UserServiceProvider());
+    $app->mount('/user', $u);
+
+Create the user database:
+
+    mysql -uUSER -pPASSWORD MYDBNAME < vendor/jasongrimes/sql/mysql.sql
+
+You should now be able to create an account at the `/user/register` URL.
+
 Requirements
 ------------
 
@@ -64,7 +118,7 @@ Installing SimpleUser
 
 Add this dependency to your `composer.json` file:
 
-    "jasongrimes/silex-simpleuser": "*"
+    "jasongrimes/silex-simpleuser": "dev-master"
 
 Create the users database in MySQL (after downloading the package with composer):
 
