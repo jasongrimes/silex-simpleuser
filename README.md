@@ -23,9 +23,8 @@ The SimpleUser package provides the following features:
 
 * A minimal `User` class which basically consists of an email, password, optional name, and some housekeeping.
 * A `UserManager` class for managing `User` objects and their persistence in an SQL database. It serves as a user provider for the Security component.
-* A `user` service for accessing the currently logged in user.
-* A `UserController` and views for for handling form-based authentication and user management.
-* An `EditUserVoter` class which provides security attributes (access control privileges) for managing users.
+* A controller and views for optionally handling form-based authentication and user management.
+* An `EDIT_USER` security attribute that can be used with the Security component's `isGranted()` method to allow users to edit their own accounts.
 * A Silex service provider and controller provider for automatically configuring the features above.
 
 Quick start example config
@@ -35,10 +34,9 @@ This configuration should work out of the box to get you up and running quickly.
 
 Add this to your composer.json and then run `composer update`:
 
-
     "require": {
-        "symfony/twig-bridge": "~2.1",
-        "jasongrimes/silex-simpleuser": "dev-master"
+        "jasongrimes/silex-simpleuser": "dev-master",
+        "symfony/twig-bridge": "~2.1"
     }
 
 Add this to your Silex application: 
@@ -49,7 +47,7 @@ Add this to your Silex application:
     $app->register(new Provider\DoctrineServiceProvider(), array('db.options' => $config['db']));
 
     $app->register(new Provider\RememberMeServiceProvider());
-    $app->register(new Silex\Provider\SecurityServiceProvider(), array(
+    $app->register(new Provider\SecurityServiceProvider(), array(
         'security.firewalls' => array(
             'your_firewall_name' => array(
                 'pattern' => '^.*$',
@@ -67,7 +65,7 @@ Add this to your Silex application:
         ),
     ));
 
-    // These services are only required for the optional SimpleUser controller provider
+    // These services are only required if you use the optional SimpleUser controller provider for form-based authentication.
     $app->register(new Provider\SessionServiceProvider()); 
     $app->register(new Provider\ServiceControllerServiceProvider()); 
     $app->register(new Provider\UrlGeneratorServiceProvider()); 
@@ -94,7 +92,7 @@ the [Session](http://silex.sensiolabs.org/doc/providers/session.html),
 [Url Generator](http://silex.sensiolabs.org/doc/providers/url_generator.html),
 and [Twig](http://silex.sensiolabs.org/doc/providers/twig.html) service providers are also required.
 
-These all come with the stock Silex distribution except for Twig, which must be added as a dependency in `composer.json` like this:
+These all come with the stock Silex distribution except for some Twig features, which must be added as a dependency in `composer.json` like this:
 
     "require": {
         "symfony/twig-bridge": "~2.1"
@@ -126,14 +124,13 @@ Create the users database in MySQL (after downloading the package with composer)
 
 Register the service in your Silex application:
 
-
     $userServiceProvider = new SimpleUser\UserServiceProvider();
     $app->register($userServiceProvider);
 
 The following services will now be available:
 
-* `user.manager`: A service for managing User instances.
-* `user`: A User instance representing the currently authenticated user (or `null` if the user is not logged in).
+* `user.manager`: A service for managing `User`s. It's an instance of `SimpleUser\UserManager`.
+* `user`: A `User` instance representing the currently authenticated user (or `null` if the user is not logged in).
 * `user.controller`: A controller with actions for handling user management routes. See "Using the controller provider" below.
 
 Configuring the Security service to use the SimpleUser user provider
@@ -196,6 +193,19 @@ Configure the firewall to use these routes for form-based authentication. (Repla
             ),
         ),
     ));
+    
+Customizing views
+-----------------
+
+### Changing the layout template
+
+The view scripts all extend a base Twig template that provides the page layout. 
+By default, this layout template is set to  `@user/layout.twig`, stored in `src/SimpleUser/views/layout.twig`.
+You'll almost certainly want to change this. 
+Create your own Twig layout template (copying and pasting as necessary from the default template),
+and then set the new template in the user controller:
+
+    $app['user.controller']->setLayoutTemplate('mylayout.twig');
 
 Access control
 --------------
@@ -210,18 +220,18 @@ Override `SimpleUser\EditUserVoter` to change these privileges.
 
 In a controller, control access like this:
 
-    // If a User instance is available
+    // Test if the viewer has access to edit the given $user
     if ($app['security']->isGranted('EDIT_USER', $user)) { ... }
 
-    // Control access in a before() middleware
-    ...
-    ->before(function(Request $request) use ($app) {
-        if (!$app['security']->isGranted('EDIT_USER_ID', $request->get('id')) { 
-            throw new AccessDeniedException();
-        }
-    });
+    // You can also test access by user ID without instantiating a User, ex. in a before() middleware
+    $app->post('/user/{id}/edit', 'user.controller:editAction')
+        ->before(function(Request $request) use ($app) {
+            if (!$app['security']->isGranted('EDIT_USER_ID', $request->get('id')) { 
+                throw new AccessDeniedException();
+            }
+        });
 
-In a Twig template, use them like this:
+In a Twig template, control access like this:
 
     {% if is_granted('EDIT_USER', user) %}
         ...
