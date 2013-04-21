@@ -64,7 +64,7 @@ Installing SimpleUser
 
 Add this dependency to your `composer.json` file:
 
-    "jasongrimes/silex-simpleuser": "~0.3"
+    "jasongrimes/silex-simpleuser": "*"
 
 Create the users database in MySQL (after downloading the package with composer):
 
