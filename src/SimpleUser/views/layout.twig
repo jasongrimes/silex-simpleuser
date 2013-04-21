@@ -10,6 +10,21 @@
         {% endblock %}
     </head>
     <body>
+        <div class="navbar">
+            <div class="navbar-inner">
+                {% if app.user %}
+                    <ul class="nav">
+                        <li><a href="{{ path('user') }}"><i class="icon-user"></i> {{ app.user.displayName|escape }}</a></li>
+                        <li class="divider-vertical"><a href="{{ path('user.logout') }}"><i class="icon-off"></i> Sign out</a></li>
+                    </ul>
+                {% else %}
+                    <ul class="nav">
+                        <li><a href="{{ path('user.login') }}">Sign in</a></li>
+                        <li class="divider-vertical"><a href="{{ path('user.register') }}">Create account</a></li>
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
         {% if app.session.flashbag.has('alert') %}
             {% for flashMessage in app.session.flashbag.get('alert') %}
                 <div class="alert">{{ flashMessage }}</div>

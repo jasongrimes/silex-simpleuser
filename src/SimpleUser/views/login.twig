@@ -5,11 +5,16 @@
 {% block content %}
 
     {% if app.user %}
-        <p>Hello, {{ app.user.name|escape }}.</p>
+        <p>Hello, {{ app.user.displayName|escape }}.</p>
         <p><a href="{{ path('user.logout') }}">Sign out</a></p>
 
     {% else %}
-        <h2>Sign in</h2>
+        <div class="page-header">
+            <h1>
+                Sign in<br/>
+                <small>Don't have an account? <a href="{{ path('user.register') }}">Register now.</a></small>
+            </h1>
+        </div>
 
         {% if error %}
             <div class="alert alert-error">{{ error }}</div>

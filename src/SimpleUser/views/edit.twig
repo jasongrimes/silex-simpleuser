@@ -1,0 +1,84 @@
+{% extends layout_template  %}
+
+{% block title %}Edit User: {{ user.displayName|escape }}{% endblock %}
+
+{% block content %}
+
+    <div class="page-header">
+        <h1>Edit User: {{ user.displayName|escape }}</h1>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form class="form-horizontal" method="POST">
+
+        <div class="control-group">
+            <label class="control-label" for="input-name">
+                Gravatar image<br><a href="http://gravatar.com">Change</a>
+            </label>
+            <div class="controls">
+                <img src="{{ image_url }}"/>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="input-name">Name</label>
+            <div class="controls">
+                <input name="name" type="text" id="input-name" placeholder="Name" value="{{ user.name|escape }}">
+                <span class="help-inline">Shown publicly</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="input-email">Email</label>
+            <div class="controls">
+                <input name="email" type="text" id="input-email" placeholder="Email" value="{{ user.email|escape }}">
+                <span class="help-inline">Never shared</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="input-password">New password</label>
+            <div class="controls">
+                <input name="password" type="password" id="input-password" placeholder="New password">
+                <span class="help-inline">Leave blank except to change</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="input-confirm-password">Confirm password</label>
+            <div class="controls">
+                <input name="confirm_password" type="password" id="input-confirm-password" placeholder="Confirm password">
+            </div>
+        </div>
+
+        {% if is_granted('ROLE_ADMIN') %}
+            <div class="controls">
+                Admin options:
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="input-roles">Roles</label>
+                <div class="controls">
+                    <select multiple id="input-roles" name="roles[]">
+                        {% for role in available_roles %}
+                            <option value="{{ role }}" {% if user.hasRole(role) %}selected{% endif %}>{{ role }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="control-group">
+            <div class="controls">
+                <button type="submit" class="btn">Save</button>
+                <a style="margin-left: 10px;" href="{{ path('user.view', {'id': user.id}) }}">Back to profile</a>
+            </div>
+        </div>
+
+
+    </form>
+
+{% endblock %}
