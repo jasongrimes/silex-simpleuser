@@ -174,15 +174,15 @@ You can mount the user routes like this:
 The following routes are provided. (In this example they are mounted under `/user`, but that can be changed by altering the `mount()` parameter above.)
 
 <table>
-    <tr><th>Route path        </th><th>Route name       </th><th>&nbsp;</th></tr>
-    <tr><td>/user/login       </td><td>user.login       </td><td>The login form.</td></tr>
-    <tr><td>/user/login_check</td> <td>user.login_check</td> <td>Process the login submission. The login form POSTs here.</td></tr>
-    <tr><td>/user/logout</td>      <td>user.logout</td>      <td>Log out the current user.</td></tr>
-    <tr><td>/user/register</td>    <td>user.register</td>    <td>Form to create a new user.</td></tr>
-    <tr><td>/user</td>             <td>user</td>             <td>View the profile of the current user.</td></tr>
-    <tr><td>/user/{id}</td>        <td>user.view</td>        <td>View a user profile.</td></tr>
-    <tr><td>/user/{id}/edit</td>   <td>user.edit</td>        <td>Edit a user.</td></tr>
-    <tr><td>/user/list</td>        <td>user.list</td>        <td>List users.</td></tr>
+    <tr><th> Route path        </th><th> Route name       </th><th> &nbsp;                                </th></tr>
+    <tr><td> /user/login       </td><td> user.login       </td><td> The login form.                       </td></tr>
+    <tr><td> /user/login_check </td><td> user.login_check </td><td> Process the login submission. The login form POSTs here.</td></tr>
+    <tr><td> /user/logout      </td><td> user.logout      </td><td> Log out the current user.             </td></tr>
+    <tr><td> /user/register    </td><td> user.register    </td><td> Form to create a new user.            </td></tr>
+    <tr><td> /user             </td><td> user             </td><td> View the profile of the current user. </td></tr>
+    <tr><td> /user/{id}        </td><td> user.view        </td><td> View a user profile.                  </td></tr>
+    <tr><td> /user/{id}/edit   </td><td> user.edit        </td><td> Edit a user.                          </td></tr>
+    <tr><td> /user/list        </td><td> user.list        </td><td> List users.                           </td></tr>
 </table>
 
 Configure the firewall to use these routes for form-based authentication. (Replace `/user` with whatever mount point you used in `mount()` above).
