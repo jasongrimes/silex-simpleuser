@@ -78,7 +78,13 @@ Create the user database:
 
     mysql -uUSER -pPASSWORD MYDBNAME < vendor/jasongrimes/sql/mysql.sql
 
-You should now be able to create an account at the `/user/register` URL.
+You should now be able to create an account at the `/user/register` URL. 
+Make the new account an administrator by editing the record directly in the database and setting the `users.roles` column to `ROLE_USER,ROLE_ADMIN`.
+
+Alternately, you can create an admin account with the user manager:
+
+    $user = $app['user.manager']->createUser('test@example.com', 'MySeCrEtPaSsWoRd', 'John Doe', array('ROLE_ADMIN'));
+    $app['user.manager']->insert($user);
 
 Requirements
 ------------
