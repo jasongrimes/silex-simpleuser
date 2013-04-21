@@ -9,7 +9,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
  *
  * @package SimpleUser
  */
-class User implements UserInterface
+class User implements UserInterface, \Serializable
 {
     protected $id;
     protected $email;
@@ -68,7 +68,7 @@ class User implements UserInterface
      */
     public function hasRole($role)
     {
-        return in_array(strtoupper($role), $this->roles, true);
+        return in_array(strtoupper($role), $this->getRoles(), true);
     }
 
     /**
@@ -251,6 +251,30 @@ class User implements UserInterface
      */
     public function eraseCredentials()
     {
+    }
+
+    /**
+     * The Symfony Security component stores a serialized User object in the session.
+     * We only need it to store the user ID, because the user provider's refreshUser() method is called on each request
+     * and reloads the user by its ID.
+     *
+     * @see \Serializable::serialize()
+     */
+    public function serialize()
+    {
+        return serialize(array(
+            $this->id,
+        ));
+    }
+
+    /**
+     * @see \Serializable::unserialize()
+     */
+    public function unserialize($serialized)
+    {
+        list (
+            $this->id,
+            ) = unserialize($serialized);
     }
 
     /**
