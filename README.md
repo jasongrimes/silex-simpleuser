@@ -119,8 +119,10 @@ The following routes are provided. (In this example they are mounted under `/use
 * `/user/login_check` (route name: `user.login_check`): Process the login submission. The login form POSTs here.
 * `/user/logout` (route name: `user.logout`): Log out the current user.
 * `/user/register` (route name: `user.register`): Form to create a new user.
-* `/user/{id}` (route name: `user.view`): View a user.
+* `/user` (route name: `user`): View the profile of the current user.
+* `/user/{id}` (route name: `user.view`): View a user profile.
 * `/user/{id}/edit` (route name: `user.edit`): Edit a user.
+* `/user/list` (route name: `user.list`): List users.
 
 Configure the firewall to use these routes for form-based authentication. (Replace `/user` with whatever mount point you used in `mount()` above).
 
