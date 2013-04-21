@@ -81,12 +81,15 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         /** @var ControllerCollection $controllers */
         $controllers = $app['controllers_factory'];
 
-        $controllers->method('GET|POST')->match('/register', 'user.controller:registerAction')
-            ->bind('user.register');
-
-
-        $controllers->get('/', 'user.controller:listAction')
-            ->bind('user.list');
+        $controllers->get('/', 'user.controller:viewSelfAction')
+            ->bind('user')
+            ->before(function(Request $request) use ($app) {
+                // Require login. This should never actually cause access to be denied,
+                // but it causes a login form to be rendered if the viewer is not logged in.
+                if (!$app['user']) {
+                    throw new AccessDeniedException();
+                }
+            });
 
         $controllers->get('/{id}', 'user.controller:viewAction')
             ->bind('user.view')
@@ -100,16 +103,19 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
                 }
             });
 
+        $controllers->get('/list', 'user.controller:listAction')
+            ->bind('user.list');
+
+        $controllers->method('GET|POST')->match('/register', 'user.controller:registerAction')
+            ->bind('user.register');
+
         $controllers->get('/login', 'user.controller:loginAction')
             ->bind('user.login');
 
-        $controllers->method('GET|POST')->match('/reset-password', 'user.controller:resetPasswordAction')
-            ->bind('user.reset_password');
-
-        // Dummy routes so we can use the names. The security provider intercepts these so no controller is needed.
+        // login_check and logout are dummy routes so we can use the names.
+        // The security provider should intercept these, so no controller is needed.
         $controllers->method('GET|POST')->match('/login_check', function() {})
             ->bind('user.login_check');
-
         $controllers->get('/logout', function() {})
             ->bind('user.logout');
 
