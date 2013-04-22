@@ -49,7 +49,7 @@ Add this to your Silex application:
     $app->register(new Provider\RememberMeServiceProvider());
     $app->register(new Provider\SecurityServiceProvider(), array(
         'security.firewalls' => array(
-            'your_firewall_name' => array(
+            'secured_area' => array(
                 'pattern' => '^.*$',
                 'anonymous' => true,
                 'remember_me' => array(),
@@ -148,7 +148,7 @@ set the `users` key to the `user.manager` service like this:
 
     $app->register(new Provider\SecurityServiceProvider(), array(
         'security.firewalls' => array(
-            'your_firewall_name' => array(
+            'secured_area' => array(
 
                 'users' => $app->share(function($app) { return $app['user.manager']; }),
                 // ...
@@ -189,7 +189,7 @@ Configure the firewall to use these routes for form-based authentication. (Repla
 
     $app->register(new Silex\Provider\SecurityServiceProvider(), array(
         'security.firewalls' => array(
-            'your_firewall_name' => array(
+            'secured_area' => array(
                 'pattern' => '^.*$',
                 'anonymous' => true,
                 'form' => array(
