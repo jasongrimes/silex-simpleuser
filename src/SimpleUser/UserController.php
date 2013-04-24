@@ -127,7 +127,7 @@ class UserController
 
         $errors = $this->userManager->validate($user);
         if (!empty($errors)) {
-            throw new InvalidArgumentException(implode('<br>', $errors));
+            throw new InvalidArgumentException(implode("\n", $errors));
         }
 
         return $user;
@@ -221,7 +221,7 @@ class UserController
 
         return $app['twig']->render('@user/edit.twig', array(
             'layout_template' => $this->layoutTemplate,
-            'error' => implode('<br>', $errors),
+            'error' => implode("\n", $errors),
             'user' => $user,
             'available_roles' => array('ROLE_USER', 'ROLE_ADMIN'),
             'image_url' => $this->getGravatarUrl($user->getEmail()),

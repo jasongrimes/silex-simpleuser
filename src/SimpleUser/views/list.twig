@@ -19,12 +19,12 @@
 
             <div class="media-body">
                 <h4 class="media-heading">
-                    <a href="{{ path('user.view', {'id': user.id}) }}">{{ user.displayName|escape }}</a>
+                    <a href="{{ path('user.view', {'id': user.id}) }}">{{ user.displayName }}</a>
                 </h4>
 
                 {% if is_granted('ROLE_ADMIN') %}
                     <div class="muted">
-                        {{ user.email|escape }}
+                        {{ user.email }}
                     </div>
                 {% endif %}
             </div>

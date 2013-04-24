@@ -5,7 +5,7 @@
 {% block content %}
 
     {% if app.user %}
-        <p>Hello, {{ app.user.displayName|escape }}. You are already registered and signed in.</p>
+        <p>Hello, {{ app.user.displayName }}. You are already registered and signed in.</p>
         <p><a href="{{ path('user.logout') }}">Sign out</a></p>
 
     {% else %}
@@ -17,7 +17,7 @@
         </div>
 
         {% if error %}
-            <div class="alert alert-error">{{ error }}</div>
+            <div class="alert alert-error">{{ error|nl2br }}</div>
         {% endif %}
 
         <form class="form-horizontal" method="POST">
@@ -25,7 +25,7 @@
             <div class="control-group">
                 <label class="control-label" for="input-name">Name</label>
                 <div class="controls">
-                    <input name="name" type="text" id="input-name" placeholder="Name" value="{{ name|escape }}">
+                    <input name="name" type="text" id="input-name" placeholder="Name" value="{{ name }}">
                     <span class="help-inline">Shown publicly</span>
                 </div>
             </div>
@@ -33,7 +33,7 @@
             <div class="control-group">
                 <label class="control-label" for="input-email">Email</label>
                 <div class="controls">
-                    <input name="email" type="text" id="input-email" placeholder="Email" value="{{ email|escape }}">
+                    <input name="email" type="email" id="input-email" placeholder="Email" required value="{{ email }}">
                     <span class="help-inline">Never shared</span>
                 </div>
             </div>
@@ -41,14 +41,14 @@
             <div class="control-group">
                 <label class="control-label" for="input-password">Password</label>
                 <div class="controls">
-                    <input name="password" type="password" id="input-password" placeholder="Password">
+                    <input name="password" type="password" id="input-password" required placeholder="Password">
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label" for="input-confirm-password">Confirm password</label>
                 <div class="controls">
-                    <input name="confirm_password" type="password" id="input-confirm-password" placeholder="Confirm password">
+                    <input name="confirm_password" type="password" id="input-confirm-password" required placeholder="Confirm password">
                 </div>
             </div>
 

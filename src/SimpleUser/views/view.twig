@@ -1,6 +1,6 @@
 {% extends layout_template  %}
 
-{% block title %}{{ user.displayName|escape }}{% endblock %}
+{% block title %}{{ user.displayName }}{% endblock %}
 
 {% block content %}
 
@@ -8,7 +8,7 @@
     <img class="media-object pull-left" src="{{ imageUrl }}" width="80" height="80">
 
     <div class="media-body">
-        <h1 class="media-heading">{{ user.displayName|escape }}</h1>
+        <h1 class="media-heading">{{ user.displayName }}</h1>
 
         <div class="muted">
             Registered {{ user.timeCreated|date('F j, Y') }}

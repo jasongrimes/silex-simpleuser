@@ -1,15 +1,15 @@
 {% extends layout_template  %}
 
-{% block title %}Edit User: {{ user.displayName|escape }}{% endblock %}
+{% block title %}Edit User: {{ user.displayName }}{% endblock %}
 
 {% block content %}
 
     <div class="page-header">
-        <h1>Edit User: {{ user.displayName|escape }}</h1>
+        <h1>Edit User: {{ user.displayName }}</h1>
     </div>
 
     {% if error %}
-        <div class="alert alert-error">{{ error }}</div>
+        <div class="alert alert-error">{{ error|nl2br }}</div>
     {% endif %}
 
     <form class="form-horizontal" method="POST">
@@ -26,7 +26,7 @@
         <div class="control-group">
             <label class="control-label" for="input-name">Name</label>
             <div class="controls">
-                <input name="name" type="text" id="input-name" placeholder="Name" value="{{ user.name|escape }}">
+                <input name="name" type="text" id="input-name" placeholder="Name" value="{{ user.name }}">
                 <span class="help-inline">Shown publicly</span>
             </div>
         </div>
@@ -34,7 +34,7 @@
         <div class="control-group">
             <label class="control-label" for="input-email">Email</label>
             <div class="controls">
-                <input name="email" type="text" id="input-email" placeholder="Email" value="{{ user.email|escape }}">
+                <input name="email" type="email" id="input-email" placeholder="Email" required value="{{ user.email }}">
                 <span class="help-inline">Never shared</span>
             </div>
         </div>
@@ -42,7 +42,7 @@
         <div class="control-group">
             <label class="control-label" for="input-password">New password</label>
             <div class="controls">
-                <input name="password" type="password" id="input-password" placeholder="New password">
+                <input name="password" type="password" id="input-password" required placeholder="New password">
                 <span class="help-inline">Leave blank except to change</span>
             </div>
         </div>
@@ -50,7 +50,7 @@
         <div class="control-group">
             <label class="control-label" for="input-confirm-password">Confirm password</label>
             <div class="controls">
-                <input name="confirm_password" type="password" id="input-confirm-password" placeholder="Confirm password">
+                <input name="confirm_password" type="password" id="input-confirm-password" required placeholder="Confirm password">
             </div>
         </div>
 
@@ -77,7 +77,6 @@
                 <a style="margin-left: 10px;" href="{{ path('user.view', {'id': user.id}) }}">Back to profile</a>
             </div>
         </div>
-
 
     </form>
 
