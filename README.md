@@ -35,18 +35,25 @@ This configuration should work out of the box to get you up and running quickly.
 Add this to your composer.json and then run `composer update`:
 
     "require": {
-        "jasongrimes/silex-simpleuser": "dev-master",
-        "symfony/twig-bridge": "~2.1"
+        "silex/silex": "1.0.*@dev"
+        , "doctrine/dbal": "~2.2"
+        , "symfony/security": "~2.1"
+        , "symfony/twig-bridge": "~2.1"
+        , "jasongrimes/silex-simpleuser": "dev-master"
     }
 
 Add this to your Silex application: 
 
     use Silex\Provider;
 
-    // TODO: Replace $config['db'] with your own database configuration information.
-    $app->register(new Provider\DoctrineServiceProvider(), array('db.options' => $config['db']));
+    $app->register(new Provider\DoctrineServiceProvider(), array('db.options' => array(
+        'driver'   => 'pdo_mysql',
+        'dbname' => 'my_app',
+        'host' => 'localhost',
+        'user' => 'mydbuser',
+        'password' => 'mydbpassword',
+    )));
 
-    $app->register(new Provider\RememberMeServiceProvider());
     $app->register(new Provider\SecurityServiceProvider(), array(
         'security.firewalls' => array(
             'secured_area' => array(
@@ -64,6 +71,9 @@ Add this to your Silex application:
             ),
         ),
     ));
+    // Note: As of this writing, RememberMeServiceProvider must be registered *after* SecurityServiceProvider or SecurityServiceProvider
+    // throws 'InvalidArgumentException' with message 'Identifier "security.remember_me.service.secured_area" is not defined.'
+    $app->register(new Provider\RememberMeServiceProvider());
 
     // These services are only required if you use the optional SimpleUser controller provider for form-based authentication.
     $app->register(new Provider\SessionServiceProvider()); 
@@ -71,12 +81,15 @@ Add this to your Silex application:
     $app->register(new Provider\UrlGeneratorServiceProvider()); 
     $app->register(new Provider\TwigServiceProvider());
 
+    // Register the SimpleUser service provider.
     $app->register($u = new SimpleUser\UserServiceProvider());
+
+    // Optionally mount the SimpleUser controller provider.
     $app->mount('/user', $u);
 
 Create the user database:
 
-    mysql -uUSER -pPASSWORD MYDBNAME < vendor/jasongrimes/sql/mysql.sql
+    mysql -uUSER -pPASSWORD MYDBNAME < vendor/jasongrimes/silex-simpleuser/sql/mysql.sql
 
 You should now be able to create an account at the `/user/register` URL.
 Make the new account an administrator by editing the record directly in the database and setting the `users.roles` column to `ROLE_USER,ROLE_ADMIN`.
