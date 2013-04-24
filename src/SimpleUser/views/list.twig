@@ -7,8 +7,14 @@
     <div class="page-header">
         <h1>List users</h1>
     </div>
-    <strong>{{ numResults }}</strong> users found.
-    Showing results <strong>{{ firstResult }} - {{ lastResult }}</strong>
+
+    {% if numResults == 1 %}
+        <strong>{{ numResults }}</strong> user found.
+    {% else %}
+        <strong>{{ numResults }}</strong> users found.
+    {% endif %}
+
+    Showing <strong>{{ firstResult }} - {{ lastResult }}</strong>
 
     {% for user in users %}
 
