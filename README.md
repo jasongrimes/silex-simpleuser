@@ -39,7 +39,7 @@ Add this to your composer.json and then run `composer update`:
         , "doctrine/dbal": "~2.2"
         , "symfony/security": "~2.1"
         , "symfony/twig-bridge": "~2.1"
-        , "jasongrimes/silex-simpleuser": "dev-master"
+        , "jasongrimes/silex-simpleuser": "~0.6.3"
     }
 
 Add this to your Silex application: 
@@ -134,9 +134,7 @@ Enable the additional service providers like this:
 Installing SimpleUser
 ---------------------
 
-Add this dependency to your `composer.json` file:
-
-    "jasongrimes/silex-simpleuser": "dev-master"
+Add the `jasongrimes/silex-simpleuser` dependency to the `requires` section of your `composer.json` file.
 
 Create the users database in MySQL (after downloading the package with composer):
 
