@@ -1,5 +1,5 @@
 {
-    "name": "agwntr/silex-simpleuser",
+    "name": "jasongrimes/silex-simpleuser",
     "type": "library",
     "description": "A simple database-backed user provider for Silex, with associated services and controllers.",
     "keywords": ["silex", "user", "user provider", "simple user provider"],
