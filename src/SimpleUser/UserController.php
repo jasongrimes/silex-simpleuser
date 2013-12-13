@@ -21,6 +21,11 @@ class UserController
     protected $userManager;
 
     protected $layoutTemplate = '@user/layout.twig';
+    protected $editTemplate = '@user/edit.twig';
+    protected $listTemplate = '@user/list.twig';
+    protected $loginTemplate = '@user/login.twig';
+    protected $registerTemplate = '@user/register.twig';
+    protected $viewTemplate = '@user/view.twig';
 
     /**
      * Constructor.
@@ -56,6 +61,46 @@ class UserController
     }
 
     /**
+     * @param string $editTemplate
+     */
+    public function setEditTemplate($editTemplate)
+    {
+        $this->editTemplate = $editTemplate;
+    }
+
+    /**
+     * @param string $listTemplate
+     */
+    public function setListTemplate($listTemplate)
+    {
+        $this->listTemplate = $listTemplate;
+    }
+
+    /**
+     * @param string $loginTemplate
+     */
+    public function setLoginTemplate($loginTemplate)
+    {
+        $this->loginTemplate = $loginTemplate;
+    }
+
+    /**
+     * @param string $registerTemplate
+     */
+    public function setRegisterTemplate($registerTemplate)
+    {
+        $this->registerTemplate = $registerTemplate;
+    }
+
+    /**
+     * @param string $viewTemplate
+     */
+    public function setViewTemplate($viewTemplate)
+    {
+        $this->viewTemplate = $viewTemplate;
+    }
+
+    /**
      * Login action.
      *
      * @param Application $app
@@ -64,7 +109,7 @@ class UserController
      */
     public function loginAction(Application $app, Request $request)
     {
-        return $app['twig']->render('@user/login.twig', array(
+        return $app['twig']->render($this->loginTemplate, array(
             'layout_template' => $this->layoutTemplate,
             'error' => $app['security.last_error']($request),
             'last_username' => $app['session']->get('_security.last_username'),
@@ -101,7 +146,7 @@ class UserController
             }
         }
 
-        return $app['twig']->render('@user/register.twig', array(
+        return $app['twig']->render($this->registerTemplate, array(
             'layout_template' => $this->layoutTemplate,
             'error' => isset($error) ? $error : null,
             'name' => $request->request->get('name'),
@@ -150,7 +195,7 @@ class UserController
             throw new NotFoundHttpException('No user was found with that ID.');
         }
 
-        return $app['twig']->render('@user/view.twig', array(
+        return $app['twig']->render($this->viewTemplate, array(
             'layout_template' => $this->layoutTemplate,
             'user' => $user,
             'imageUrl' => $this->getGravatarUrl($user->getEmail()),
@@ -219,7 +264,7 @@ class UserController
             }
         }
 
-        return $app['twig']->render('@user/edit.twig', array(
+        return $app['twig']->render($this->editTemplate, array(
             'layout_template' => $this->layoutTemplate,
             'error' => implode("\n", $errors),
             'user' => $user,
@@ -262,7 +307,7 @@ class UserController
         $firstResult = $offset + 1;
         $lastResult = ($offset + $limit) > $numResults ? $numResults : $offset + $limit;
 
-        return $app['twig']->render('@user/list.twig', array(
+        return $app['twig']->render($this->listTemplate, array(
             'layout_template' => $this->layoutTemplate,
             'users' => $users,
             'numResults' => $numResults,
