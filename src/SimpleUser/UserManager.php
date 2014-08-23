@@ -267,7 +267,7 @@ class UserManager implements UserProviderInterface
         }
         if (array_key_exists('limit', $options)) {
             list ($offset, $limit) = is_array($options['limit']) ? $options['limit'] : array(0, $options['limit']);
-            $sql .= 'LIMIT ' . (int) $offset . ', ' . (int) $limit . ' ';
+            $sql .=   ' LIMIT ' . (int) $limit . ' ' .' OFFSET ' . (int) $offset ;
         }
 
         $data = $this->conn->fetchAll($sql, $params);
