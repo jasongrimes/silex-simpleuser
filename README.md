@@ -35,11 +35,11 @@ This configuration should work out of the box to get you up and running quickly.
 Add this to your composer.json and then run `composer update`:
 
     "require": {
-        "silex/silex": "~1.0"
-        , "doctrine/dbal": "~2.4"
-        , "symfony/security": "~2.3"
-        , "symfony/twig-bridge": "~2.3"
-        , "jasongrimes/silex-simpleuser": "dev-master"
+        "silex/silex": "~1.0",
+        "doctrine/dbal": "~2.4",
+        "symfony/security": "~2.3",
+        "symfony/twig-bridge": "~2.3",
+        "jasongrimes/silex-simpleuser": "dev-master"
     }
 
 Add this to your Silex application: 
