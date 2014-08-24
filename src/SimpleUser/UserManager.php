@@ -105,6 +105,9 @@ class UserManager implements UserProviderInterface
             $user->setRoles($roles);
         }
         $user->setTimeCreated($data['time_created']);
+        if (!empty($data['customFields'])) {
+            $user->setCustomFields($data['customFields']);
+        }
 
         return $user;
     }
