@@ -18,6 +18,7 @@ class User implements UserInterface, \Serializable
     protected $roles = array();
     protected $name = '';
     protected $timeCreated;
+    protected $customFields = array();
 
     /**
      * Constructor.
@@ -306,6 +307,44 @@ class User implements UserInterface, \Serializable
         }
 
         return $errors;
+    }
+
+    /**
+     * @param string $customField
+     * @return mixed|null
+     */
+    public function getCustomField($customField)
+    {
+        if (array_key_exists($customField, $this->customFields)) {
+            return $this->customFields[$customField];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param string $customField
+     * @param mixed $value
+     */
+    public function setCustomField($customField, $value)
+    {
+        $this->customFields[$customField] = $value;
+    }
+
+    /**
+     * @param array|null $customFields
+     */
+    public function setCustomFields($customFields)
+    {
+        $this->customFields = $customFields;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCustomFields()
+    {
+        return $this->customFields;
     }
 
 }

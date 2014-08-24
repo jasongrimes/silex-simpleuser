@@ -277,6 +277,7 @@ class UserManager implements UserProviderInterface
             if (array_key_exists($userData['id'], $this->identityMap)) {
                 $user = $this->identityMap[$userData['id']];
             } else {
+                $userData['customFields'] = $this->getUserCustomFields($userData['id']);
                 $user = $this->hydrateUser($userData);
                 $this->identityMap[$user->getId()] = $user;
             }
@@ -284,6 +285,22 @@ class UserManager implements UserProviderInterface
         }
 
         return $users;
+    }
+
+    /**
+     * @param $userId
+     * @return array
+     */
+    protected function getUserCustomFields($userId)
+    {
+        $customFields = array();
+
+        $rows = $this->conn->fetchAll('SELECT * FROM user_custom_fields WHERE user_id = ?', array($userId));
+        foreach ($rows as $row) {
+            $customFields[$row['attribute']] = $row['value'];
+        }
+
+        return $customFields;
     }
 
     /**
@@ -297,11 +314,29 @@ class UserManager implements UserProviderInterface
         $params = array();
 
         $sql = 'FROM users ';
+        // JOIN on custom fields, if needed.
+        if (array_key_exists('customFields', $criteria)) {
+            $i = 0;
+            foreach ($criteria['customFields'] as $attribute => $value) {
+                $i++;
+                $alias = 'd' . $i;
+                $sql .= 'JOIN user_custom_fields ' . $alias . ' ';
+                $sql .= 'ON users.id = ' . $alias . '.user_id ';
+                $sql .= 'AND ' . $alias . '.attribute = :attribute' . $i . ' ';
+                $sql .= 'AND ' . $alias . '.value = :value' . $i . ' ';
+                $params['attribute' . $i] = $attribute;
+                $params['value' . $i] = $value;
+            }
+        }
 
         $first_crit = true;
         foreach ($criteria as $key => $val) {
-            $sql .= ($first_crit ? 'WHERE' : 'AND') . ' ' . $key . ' = :' . $key . ' ';
-            $params[$key] = $val;
+            if ($key == 'customFields') {
+                continue;
+            } else {
+                $sql .= ($first_crit ? 'WHERE' : 'AND') . ' ' . $key . ' = :' . $key . ' ';
+                $params[$key] = $val;
+            }
             $first_crit = false;
         }
 
@@ -345,6 +380,8 @@ class UserManager implements UserProviderInterface
 
         $user->setId($this->conn->lastInsertId());
 
+        $this->saveUserCustomFields($user);
+
         $this->identityMap[$user->getId()] = $user;
     }
 
@@ -375,6 +412,21 @@ class UserManager implements UserProviderInterface
         );
 
         $this->conn->executeUpdate($sql, $params);
+
+        $this->saveUserCustomFields($user);
+    }
+
+    /**
+     * @param User $user
+     */
+    protected function saveUserCustomFields(User $user)
+    {
+        $this->conn->executeUpdate('DELETE FROM user_custom_fields WHERE user_id = ?', array($user->getId()));
+
+        foreach ($user->getCustomFields() as $attribute => $value) {
+            $this->conn->executeUpdate('INSERT INTO user_custom_fields SET user_id = ?, attribute = ?, value = ?',
+                array($user->getId(), $attribute, $value));
+        }
     }
 
     /**
@@ -387,6 +439,7 @@ class UserManager implements UserProviderInterface
         $this->clearIdentityMap($user);
 
         $this->conn->executeUpdate('DELETE FROM users WHERE id = ?', array($user->getId()));
+        $this->conn->executeUpdate('DELETE FROM user_custom_fields WHERE user_id = ?', array($user->getId()));
     }
 
     /**
