@@ -10,6 +10,7 @@ CREATE TABLE `users` (
   UNIQUE KEY `unique_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+
 CREATE TABLE `user_custom_fields` (
   user_id INT(11) UNSIGNED NOT NULL,
   attribute VARCHAR(50) NOT NULL DEFAULT '',
