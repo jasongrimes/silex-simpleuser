@@ -35,11 +35,11 @@ This configuration should work out of the box to get you up and running quickly.
 Add this to your composer.json and then run `composer update`:
 
     "require": {
-        "silex/silex": "1.0.*@dev"
-        , "doctrine/dbal": "~2.2"
-        , "symfony/security": "~2.1"
-        , "symfony/twig-bridge": "~2.1"
-        , "jasongrimes/silex-simpleuser": "~0.6.3"
+        "silex/silex": "~1.0"
+        , "doctrine/dbal": "~2.4"
+        , "symfony/security": "~2.3"
+        , "symfony/twig-bridge": "~2.3"
+        , "jasongrimes/silex-simpleuser": "dev-master"
     }
 
 Add this to your Silex application: 
@@ -138,7 +138,7 @@ Add the `jasongrimes/silex-simpleuser` dependency to the `requires` section of y
 
 Create the users database in MySQL (after downloading the package with composer):
 
-    mysql -uUSER -pPASSWORD MYDBNAME < vendor/jasongrimes/sql/mysql.sql
+    mysql -uUSER -pPASSWORD MYDBNAME < vendor/jasongrimes/silex-simpleuser/sql/mysql.sql
 
 Register the service in your Silex application:
 
