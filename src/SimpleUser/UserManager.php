@@ -319,7 +319,7 @@ class UserManager implements UserProviderInterface
             $i = 0;
             foreach ($criteria['customFields'] as $attribute => $value) {
                 $i++;
-                $alias = 'd' . $i;
+                $alias = 'custom' . $i;
                 $sql .= 'JOIN user_custom_fields ' . $alias . ' ';
                 $sql .= 'ON users.id = ' . $alias . '.user_id ';
                 $sql .= 'AND ' . $alias . '.attribute = :attribute' . $i . ' ';
