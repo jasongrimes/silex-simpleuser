@@ -281,7 +281,7 @@ class User implements UserInterface, \Serializable
     /**
      * Validate the user object.
      *
-     * @return array An array of error messages, or an ampty array if there were no errors.
+     * @return array An array of error messages, or an empty array if there were no errors.
      */
     public function validate()
     {
