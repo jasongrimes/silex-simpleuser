@@ -23,7 +23,7 @@ You should feel free to do either one (this is open source software under the BS
 
 The SimpleUser package provides the following features:
 
-* A minimal `User` class which basically consists of an email, password, optional name, and some housekeeping.
+* A minimal `User` class which basically consists of an email, password, optional name, and support for custom fields.
 * A `UserManager` class for managing `User` objects and their persistence in an SQL database. It serves as a user provider for the Security component.
 * A controller and views for optionally handling form-based authentication and user management.
 * An `EDIT_USER` security attribute that can be used with the Security component's `isGranted()` method to allow users to edit their own accounts.
