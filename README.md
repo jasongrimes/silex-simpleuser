@@ -41,7 +41,7 @@ Add this to your composer.json and then run `composer update`:
         "doctrine/dbal": "~2.4",
         "symfony/security": "~2.3",
         "symfony/twig-bridge": "~2.3",
-        "jasongrimes/silex-simpleuser": "dev-master"
+        "jasongrimes/silex-simpleuser": "~1.0"
     }
 
 Add this to your Silex application: 
