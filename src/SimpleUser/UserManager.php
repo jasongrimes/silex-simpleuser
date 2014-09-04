@@ -427,7 +427,7 @@ class UserManager implements UserProviderInterface
         $this->conn->executeUpdate('DELETE FROM user_custom_fields WHERE user_id = ?', array($user->getId()));
 
         foreach ($user->getCustomFields() as $attribute => $value) {
-            $this->conn->executeUpdate('INSERT INTO user_custom_fields SET user_id = ?, attribute = ?, value = ?',
+            $this->conn->executeUpdate('INSERT INTO user_custom_fields (user_id, attribute, value) VALUES (?, ?, ?) ',
                 array($user->getId(), $attribute, $value));
         }
     }

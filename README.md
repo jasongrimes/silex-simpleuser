@@ -1,11 +1,11 @@
 Simple user provider for Silex
 ==============================
 
+[![Build Status](https://travis-ci.org/jasongrimes/silex-simpleuser.svg?branch=master)](https://travis-ci.org/jasongrimes/silex-simpleuser)
+
 A simple database-backed user provider for use with the Silex [SecurityServiceProvider](http://silex.sensiolabs.org/doc/providers/security.html).
 
 In addition to the user provider, this package also includes a controller provider that can optionally set up simple routes and controllers for form-based authentication.
-
-[![Build Status](https://travis-ci.org/jasongrimes/silex-simpleuser.svg?branch=master)](https://travis-ci.org/jasongrimes/silex-simpleuser)
 
 Overview
 --------
