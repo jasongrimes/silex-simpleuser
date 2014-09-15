@@ -55,6 +55,10 @@ Add this to your Silex application:
 
     $app->register(new Provider\SecurityServiceProvider(), array(
         'security.firewalls' => array(
+            // Ensure that the login page is accessible whether logged in or not
+            'login' => array(
+                'pattern' => '^/user/login$',
+            ),
             'secured_area' => array(
                 'pattern' => '^.*$',
                 'anonymous' => true,
