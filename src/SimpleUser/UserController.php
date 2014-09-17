@@ -27,6 +27,8 @@ class UserController
     protected $editTemplate = '@user/edit.twig';
     protected $listTemplate = '@user/list.twig';
 
+    protected $controllerOptions = array();
+
     /**
      * Constructor.
      *
@@ -53,6 +55,10 @@ class UserController
             if (array_key_exists($property, $options)) {
                 $this->$property = $options[$property];
             }
+        }
+
+        if (array_key_exists('controllers', $options)) {
+            $this->controllerOptions = $options['controllers'];
         }
     }
 
@@ -240,10 +246,12 @@ class UserController
         $errors = array();
 
         $user = $this->userManager->getUser($id);
-
         if (!$user) {
             throw new NotFoundHttpException('No user was found with that ID.');
         }
+
+        $options = array_key_exists('edit', $this->controllerOptions) ? $this->controllerOptions['edit'] : array();
+        $customFields = array_key_exists('customFields', $options) ? $options['customFields'] : array();
 
         if ($request->isMethod('POST')) {
             $user->setName($request->request->get('name'));
@@ -257,6 +265,12 @@ class UserController
             }
             if ($app['security']->isGranted('ROLE_ADMIN') && $request->request->has('roles')) {
                 $user->setRoles($request->request->get('roles'));
+            }
+
+            foreach (array_keys($customFields) as $customField) {
+                if ($request->request->has($customField)) {
+                    $user->setCustomField($customField, $request->request->get($customField));
+                }
             }
 
             $errors += $this->userManager->validate($user);
@@ -274,6 +288,7 @@ class UserController
             'user' => $user,
             'available_roles' => array('ROLE_USER', 'ROLE_ADMIN'),
             'image_url' => $this->getGravatarUrl($user->getEmail()),
+            'customFields' => $customFields,
         ));
     }
 
