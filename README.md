@@ -2,6 +2,7 @@ Simple user provider for Silex
 ==============================
 
 [![Build Status](https://travis-ci.org/jasongrimes/silex-simpleuser.svg?branch=master)](https://travis-ci.org/jasongrimes/silex-simpleuser)
+[![Total Downloads](https://poser.pugx.org/jasongrimes/silex-simpleuser/downloads.svg)](https://packagist.org/packages/jasongrimes/silex-simpleuser)
 
 A simple database-backed user provider for use with the Silex [SecurityServiceProvider](http://silex.sensiolabs.org/doc/providers/security.html).
 
@@ -55,6 +56,10 @@ Add this to your Silex application:
 
     $app->register(new Provider\SecurityServiceProvider(), array(
         'security.firewalls' => array(
+            // Ensure that the login page is accessible whether logged in or not
+            'login' => array(
+                'pattern' => '^/user/login$',
+            ),
             'secured_area' => array(
                 'pattern' => '^.*$',
                 'anonymous' => true,
