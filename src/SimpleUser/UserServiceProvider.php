@@ -30,7 +30,7 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         });
 
         $app['user.controller'] = $app->share(function ($app) {
-            $options = $app->offsetExists('user.controller.options') ? $app['user.controller.options'] : array();
+            $options = $app->offsetExists('user.options') ? $app['user.options'] : array();
             return new UserController($app['user.manager'], $options);
         });
 
