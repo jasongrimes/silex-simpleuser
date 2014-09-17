@@ -311,15 +311,20 @@ class User implements UserInterface, \Serializable
 
     /**
      * @param string $customField
+     * @return bool
+     */
+    public function hasCustomField($customField)
+    {
+        return array_key_exists($customField, $this->customFields);
+    }
+
+    /**
+     * @param string $customField
      * @return mixed|null
      */
     public function getCustomField($customField)
     {
-        if (array_key_exists($customField, $this->customFields)) {
-            return $this->customFields[$customField];
-        }
-
-        return null;
+        return $this->hasCustomField($customField) ? $this->customFields[$customField] : null;
     }
 
     /**
