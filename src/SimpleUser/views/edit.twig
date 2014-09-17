@@ -4,76 +4,76 @@
 
 {% block content %}
 
-    <div class="page-header">
-        <h1>Edit User: {{ user.displayName }}</h1>
-    </div>
+    <h1>Edit User: {{ user.displayName }}</h1>
 
     {% if error %}
-        <div class="alert alert-error">{{ error|nl2br }}</div>
+        <div class="alert alert-danger">{{ error|nl2br }}</div>
     {% endif %}
 
     <form class="form-horizontal" method="POST">
 
-        <div class="control-group">
-            <label class="control-label" for="input-name">
-                Gravatar image<br><a href="http://gravatar.com">Change</a>
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-name">
+                Gravatar image<br>
+                <a href="http://gravatar.com">Change</a>
             </label>
-            <div class="controls">
+            <div class="col-sm-8 form-control-static">
                 <img src="{{ image_url }}"/>
             </div>
         </div>
 
-        <div class="control-group">
-            <label class="control-label" for="input-name">Name</label>
-            <div class="controls">
-                <input name="name" type="text" id="input-name" placeholder="Name" value="{{ user.name }}">
-                <span class="help-inline">Shown publicly</span>
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-name">Name</label>
+            <div class="col-sm-8">
+                <input class="form-control" name="name" type="text" id="input-name" placeholder="Name" value="{{ user.name }}">
+                <p class="help-block">Shown publicly</p>
             </div>
         </div>
 
-        <div class="control-group">
-            <label class="control-label" for="input-email">Email</label>
-            <div class="controls">
-                <input name="email" type="email" id="input-email" placeholder="Email" required value="{{ user.email }}">
-                <span class="help-inline">Never shared</span>
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-email">Email</label>
+            <div class="col-sm-8">
+                <input class="form-control" name="email" type="email" id="input-email" placeholder="Email" required value="{{ user.email }}">
+                <p class="help-block">Never shared</p>
             </div>
         </div>
 
-        <div class="control-group">
-            <label class="control-label" for="input-password">New password</label>
-            <div class="controls">
-                <input name="password" type="password" id="input-password" placeholder="New password">
-                <span class="help-inline">Leave blank except to change</span>
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-password">New password</label>
+            <div class="col-sm-8">
+                <input class="form-control" name="password" type="password" id="input-password" placeholder="New password">
+                <p class="help-block">Leave blank except to change</p>
             </div>
         </div>
 
-        <div class="control-group">
-            <label class="control-label" for="input-confirm-password">Confirm password</label>
-            <div class="controls">
-                <input name="confirm_password" type="password" id="input-confirm-password" placeholder="Confirm password">
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-confirm-password">Confirm password</label>
+            <div class="col-sm-8">
+                <input class="form-control" name="confirm_password" type="password" id="input-confirm-password" placeholder="Confirm password">
             </div>
         </div>
 
         {% if is_granted('ROLE_ADMIN') %}
-            <div class="controls">
-                Admin options:
-            </div>
 
-            <div class="control-group">
-                <label class="control-label" for="input-roles">Roles</label>
-                <div class="controls">
-                    <select multiple id="input-roles" name="roles[]">
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-roles">
+                    Roles<br/>
+                    <span class="text-muted" style="font-weight: normal;">(Admin-only)</span>
+                </label>
+                <div class="col-sm-8">
+                    <select class="form-control" multiple id="input-roles" name="roles[]">
                         {% for role in available_roles %}
                             <option value="{{ role }}" {% if user.hasRole(role) %}selected{% endif %}>{{ role }}</option>
                         {% endfor %}
                     </select>
                 </div>
             </div>
+
         {% endif %}
 
-        <div class="control-group">
-            <div class="controls">
-                <button type="submit" class="btn">Save</button>
+        <div class="form-group">
+            <div class="col-sm-8 col-sm-offset-2">
+                <button type="submit" class="btn btn-primary">Save</button>
                 <a style="margin-left: 10px;" href="{{ path('user.view', {'id': user.id}) }}">Back to profile</a>
             </div>
         </div>

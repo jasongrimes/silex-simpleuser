@@ -10,13 +10,19 @@
     <div class="media-body">
         <h1 class="media-heading">{{ user.displayName }}</h1>
 
-        <div class="muted">
+        {% if is_granted('EDIT_USER', user) %}
+            <div class="text-muted">
+                {{ user.email }}
+            </div>
+        {% endif %}
+
+        <div class="text-muted">
             Registered {{ user.timeCreated|date('F j, Y') }}
         </div>
 
         {% if is_granted('EDIT_USER', user) %}
             <div>
-                <a href="{{ path('user.edit', {'id': user.id}) }}"><i class="icon-edit" style="margin-right: 5px;"></i>Edit</a>
+                <a href="{{ path('user.edit', {'id': user.id}) }}"><span class="glyphicon glyphicon-edit" style="margin-right: 5px;"></span>Edit</a>
             </div>
         {% endif %}
     </div>

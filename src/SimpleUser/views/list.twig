@@ -4,9 +4,7 @@
 
 {% block content %}
 
-    <div class="page-header">
-        <h1>List users</h1>
-    </div>
+    <h1>List users</h1>
 
     {% if numResults == 1 %}
         <strong>{{ numResults }}</strong> user found.
@@ -14,7 +12,7 @@
         <strong>{{ numResults }}</strong> users found.
     {% endif %}
 
-    Showing <strong>{{ firstResult }} - {{ lastResult }}</strong>
+    Showing <strong>{{ firstResult }} - {{ lastResult }}</strong>.
 
     {% for user in users %}
 
@@ -29,7 +27,7 @@
                 </h4>
 
                 {% if is_granted('ROLE_ADMIN') %}
-                    <div class="muted">
+                    <div class="text-muted">
                         {{ user.email }}
                     </div>
                 {% endif %}
