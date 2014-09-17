@@ -30,7 +30,8 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         });
 
         $app['user.controller'] = $app->share(function ($app) {
-            return new UserController($app['user.manager'], (array) $app['user.controller.options']);
+            $options = $app->offsetExists('user.controller.options') ? $app['user.controller.options'] : array();
+            return new UserController($app['user.manager'], $options);
         });
 
         // Add a custom security voter to support testing user attributes.
