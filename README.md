@@ -6,6 +6,10 @@ Simple user provider for Silex
 
 A simple database-backed user provider for use with the Silex [SecurityServiceProvider](http://silex.sensiolabs.org/doc/providers/security.html).
 
+[![Latest Stable Version](https://poser.pugx.org/jasongrimes/silex-simpleuser/v/stable.svg)](https://packagist.org/packages/jasongrimes/silex-simpleuser)
+
+[![Latest Unstable Version](https://poser.pugx.org/jasongrimes/silex-simpleuser/v/unstable.svg)](https://packagist.org/packages/jasongrimes/silex-simpleuser)
+
 In addition to the user provider, this package also includes a controller provider that can optionally set up simple routes and controllers for form-based authentication.
 
 Overview
