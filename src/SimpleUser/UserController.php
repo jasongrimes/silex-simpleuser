@@ -21,11 +21,11 @@ class UserController
     protected $userManager;
 
     protected $layoutTemplate = '@user/layout.twig';
-    protected $editTemplate = '@user/edit.twig';
-    protected $listTemplate = '@user/list.twig';
     protected $loginTemplate = '@user/login.twig';
     protected $registerTemplate = '@user/register.twig';
     protected $viewTemplate = '@user/view.twig';
+    protected $editTemplate = '@user/edit.twig';
+    protected $listTemplate = '@user/list.twig';
 
     /**
      * Constructor.
@@ -47,8 +47,12 @@ class UserController
      */
     public function setOptions(array $options)
     {
-        if (array_key_exists('layout_template', $options)) {
-            $this->layoutTemplate = $options['layout_template'];
+        foreach (array('layoutTemplate', 'loginTemplate', 'registerTemplate', 'viewTemplate', 'editTemplate', 'listTemplate')
+                 as $property)
+        {
+            if (array_key_exists($property, $options)) {
+                $this->$property = $options[$property];
+            }
         }
     }
 
