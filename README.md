@@ -38,58 +38,85 @@ This configuration should work out of the box to get you up and running quickly.
 Add this to your composer.json and then run `composer update`:
 
     "require": {
-        "jasongrimes/silex-simpleuser": "~1.0",
-        "symfony/twig-bridge": "~2.3"
+        "silex/silex": "~1.0",
+        "symfony/twig-bridge": "~2.3",
+        "jasongrimes/silex-simpleuser": "~1.0"
     }
 
-Add this to your Silex application: 
+Set up your Silex application something like this:
 
+
+    <?php
+
+    use Silex\Application;
     use Silex\Provider;
 
-    $app->register(new Provider\DoctrineServiceProvider(), array('db.options' => array(
-        'driver'   => 'pdo_mysql',
-        'dbname' => 'my_app',
-        'host' => 'localhost',
-        'user' => 'mydbuser',
-        'password' => 'mydbpassword',
-    )));
+    //
+    // Application setup
+    //
 
-    $app->register(new Provider\SecurityServiceProvider(), array(
-        'security.firewalls' => array(
-            // Ensure that the login page is accessible whether logged in or not
-            'login' => array(
-                'pattern' => '^/user/login$',
-            ),
-            'secured_area' => array(
-                'pattern' => '^.*$',
-                'anonymous' => true,
-                'remember_me' => array(),
-                'form' => array(
-                    'login_path' => '/user/login',
-                    'check_path' => '/user/login_check',
-                ),
-                'logout' => array(
-                    'logout_path' => '/user/logout',
-                ),
-                'users' => $app->share(function($app) { return $app['user.manager']; }),
-            ),
-        ),
-    ));
-    // Note: As of this writing, RememberMeServiceProvider must be registered *after* SecurityServiceProvider or SecurityServiceProvider
-    // throws 'InvalidArgumentException' with message 'Identifier "security.remember_me.service.secured_area" is not defined.'
+    $app = new Application();
+    $app->register(new Provider\DoctrineServiceProvider());
+    $app->register(new Provider\SecurityServiceProvider());
     $app->register(new Provider\RememberMeServiceProvider());
-
-    // These services are only required if you use the optional SimpleUser controller provider for form-based authentication.
-    $app->register(new Provider\SessionServiceProvider()); 
-    $app->register(new Provider\ServiceControllerServiceProvider()); 
-    $app->register(new Provider\UrlGeneratorServiceProvider()); 
+    $app->register(new Provider\SessionServiceProvider());
+    $app->register(new Provider\ServiceControllerServiceProvider());
+    $app->register(new Provider\UrlGeneratorServiceProvider());
     $app->register(new Provider\TwigServiceProvider());
 
     // Register the SimpleUser service provider.
-    $app->register($u = new SimpleUser\UserServiceProvider());
+    $simpleUserProvider = new SimpleUser\UserServiceProvider();
+    $app->register($simpleUserProvider);
 
-    // Optionally mount the SimpleUser controller provider.
-    $app->mount('/user', $u);
+    // ...
+
+    //
+    // Controllers
+    //
+
+    $app->mount('/user', $simpleUserProvider);
+
+    $app->get('/', function () use ($app) {
+        return $app['twig']->render('index.twig', array());
+    });
+
+    // ...
+
+    //
+    // Configuration
+    //
+
+    $app['user.options'] = array();
+
+    $app['security.firewalls'] = array(
+        // Ensure that the login page is accessible to all
+        'login' => array(
+            'pattern' => '^/user/login$',
+        ),
+        'secured_area' => array(
+            'pattern' => '^.*$',
+            'anonymous' => true,
+            'remember_me' => array(),
+            'form' => array(
+                'login_path' => '/user/login',
+                'check_path' => '/user/login_check',
+            ),
+            'logout' => array(
+                'logout_path' => '/user/logout',
+            ),
+            'users' => $app->share(function($app) { return $app['user.manager']; }),
+        ),
+    );
+
+    $app['db.options'] = array(
+        'driver'   => 'pdo_mysql',
+        'host' => 'localhost',
+        'dbname' => 'mydbname',
+        'user' => 'mydbuser',
+        'password' => 'mydbpassword',
+    );
+
+    return $app;
 
 Create the user database:
 
@@ -99,166 +126,31 @@ You should now be able to create an account at the `/user/register` URL.
 Make the new account an administrator by editing the record directly in the database and setting the `users.roles` column to `ROLE_USER,ROLE_ADMIN`.
 (After you have one admin account, it can grant the admin role to others via the web interface.)
 
-Alternately, you can create an admin account with the user manager:
-
-    $user = $app['user.manager']->createUser('test@example.com', 'MySeCrEtPaSsWoRd', 'John Doe', array('ROLE_ADMIN'));
-    $app['user.manager']->insert($user);
-
-Requirements
-------------
-
-SimpleUser depends on the [DoctrineServiceProvider](http://silex.sensiolabs.org/doc/providers/doctrine.html).
-(This provides a basic DBAL--database abstraction layer--not the full Doctrine 2 ORM.)
-
-In addition, if you want to use the optional controller provider to set up simple routes for form-based authentication and user management,
-the [Session](http://silex.sensiolabs.org/doc/providers/session.html),
-[Service Controller](http://silex.sensiolabs.org/doc/providers/service_controller.html),
-[Url Generator](http://silex.sensiolabs.org/doc/providers/url_generator.html),
-and [Twig](http://silex.sensiolabs.org/doc/providers/twig.html) service providers are also required.
-
-These all come with the stock Silex distribution except for some Twig features, which must be added as a dependency in `composer.json` like this:
-
-    "require": {
-        "symfony/twig-bridge": "~2.1"
-    }
-
-Enable Doctrine something like this:
-
-    use Silex\Provider;
-
-    $app->register(new Provider\DoctrineServiceProvider(), array('db.options' => $config['db']));
-
-Enable the additional service providers like this:
-
-    $app->register(new Provider\SessionServiceProvider()); 
-    $app->register(new Provider\ServiceControllerServiceProvider()); 
-    $app->register(new Provider\UrlGeneratorServiceProvider()); 
-    $app->register(new Provider\TwigServiceProvider());
-
-Installing SimpleUser
----------------------
-
-Add the `jasongrimes/silex-simpleuser` dependency to the `requires` section of your `composer.json` file.
-
-Create the users database in MySQL (after downloading the package with composer):
-
-    mysql -uUSER -pPASSWORD MYDBNAME < vendor/jasongrimes/silex-simpleuser/sql/mysql.sql
-
-Register the service in your Silex application:
-
-    $userServiceProvider = new SimpleUser\UserServiceProvider();
-    $app->register($userServiceProvider);
-
-The following services will now be available:
-
-* `user.manager`: A service for managing `User`s. It's an instance of `SimpleUser\UserManager`.
-* `user`: A `User` instance representing the currently authenticated user (or `null` if the user is not logged in).
-* `user.controller`: A controller with actions for handling user management routes. See "Using the controller provider" below.
-
-Configuring the Security service to use the SimpleUser user provider
---------------------------------------------------------------------
-
-To configure the Silex security service to use the `SimpleUser\UserManager` as its user provider, 
-set the `users` key to the `user.manager` service like this:
-
-    $app->register(new Provider\SecurityServiceProvider(), array(
-        'security.firewalls' => array(
-            'secured_area' => array(
-
-                'users' => $app->share(function($app) { return $app['user.manager']; }),
-                // ...
-            ),
-        ),
-    ));
-
-Using the controller provider
------------------------------
-
-In addition to registering services, the `SimpleUser\UserServiceProvider` also acts as a controller provider. 
-It defines some routes that can be used for logging in and managing users.
-
-You can mount the user routes like this:
-
-    // Register SimpleUser services.
-    $userServiceProvider = new SimpleUser\UserServiceProvider();
-    $app->register($userServiceProvider);
-
-    // Mount SimpleUser routes.
-    $app->mount('/user', $userServiceProvider);
-
-The following routes are provided. (In this example they are mounted under `/user`, but that can be changed by altering the `mount()` parameter above.)
-
-<table>
-    <tr><th> Route path        </th><th> Route name       </th><th> &nbsp;                                </th></tr>
-    <tr><td> /user/login       </td><td> user.login       </td><td> The login form.                       </td></tr>
-    <tr><td> /user/login_check </td><td> user.login_check </td><td> Process the login submission. The login form POSTs here.</td></tr>
-    <tr><td> /user/logout      </td><td> user.logout      </td><td> Log out the current user.             </td></tr>
-    <tr><td> /user/register    </td><td> user.register    </td><td> Form to create a new user.            </td></tr>
-    <tr><td> /user             </td><td> user             </td><td> View the profile of the current user. </td></tr>
-    <tr><td> /user/{id}        </td><td> user.view        </td><td> View a user profile.                  </td></tr>
-    <tr><td> /user/{id}/edit   </td><td> user.edit        </td><td> Edit a user.                          </td></tr>
-    <tr><td> /user/list        </td><td> user.list        </td><td> List users.                           </td></tr>
-</table>
-
-Configure the firewall to use these routes for form-based authentication. (Replace `/user` with whatever mount point you used in `mount()` above).
-
-    $app->register(new Silex\Provider\SecurityServiceProvider(), array(
-        'security.firewalls' => array(
-            'secured_area' => array(
-                'pattern' => '^.*$',
-                'anonymous' => true,
-                'form' => array(
-                    'login_path' => '/user/login',
-                    'check_path' => '/user/login_check',
-                ),
-                'logout' => array(
-                    'logout_path' => '/user/logout',
-                ),
-                'users' => $app->share(function($app) { return $app['user.manager']; }),
-            ),
-        ),
-    ));
-    
-Customizing views
------------------
-
-### Changing the layout template
-
-The view scripts all extend a base Twig template that provides the page layout. 
-By default, this layout template is set to  `@user/layout.twig`, stored in `src/SimpleUser/views/layout.twig`.
-You'll almost certainly want to change this. 
-Create your own Twig layout template (copying and pasting as necessary from the default template),
-and then set the new template in the user controller:
-
-    $app['user.controller']->setLayoutTemplate('mylayout.twig');
-
-Access control
+Config options
 --------------
 
-The `SimpleUser\UserServiceProvider` sets up custom access control attributes for testing whether the viewer can edit a user.
+    $app['user.options'] = array(
+        // Custom user class
+        'userClass' => 'My\User',
 
-* `EDIT_USER`: Whether the current user is allowed to edit the given user object.
-* `EDIT_USER_ID`: Whether the currently authenticated user is allowed to edit the user with the given user ID. Useful for controlling access in `before()` middlewares.
+        // Custom templates
+        'layoutTemplate'   => 'layout.twig',
+        'loginTemplate'    => 'login.twig',
+        'registerTemplate' => 'register.twig',
+        'viewTemplate'     => 'view.twig',
+        'editTemplate'     => 'edit.twig',
+        'listTemplate'     => 'list.twig',
 
-By default, users can edit their own user account, and those with `ROLE_ADMIN` can edit any user.
-Override `SimpleUser\EditUserVoter` to change these privileges.
+        // Controller options
+        'controllers' => array(
+            'edit' => array(
+                'customFields' => array('field' => 'Label'),
+            ),
+        ),
+    );
 
-In a controller, control access like this:
+More information
+----------------
 
-    // Test if the viewer has access to edit the given $user
-    if ($app['security']->isGranted('EDIT_USER', $user)) { ... }
-
-    // You can also test access by user ID without instantiating a User, ex. in a before() middleware
-    $app->post('/user/{id}/edit', 'user.controller:editAction')
-        ->before(function(Request $request) use ($app) {
-            if (!$app['security']->isGranted('EDIT_USER_ID', $request->get('id')) { 
-                throw new AccessDeniedException();
-            }
-        });
-
-In a Twig template, control access like this:
-
-    {% if is_granted('EDIT_USER', user) %}
-        ...
-    {% endif %}
+For more information, see the [Silex SimpleUser tutorial](http://jasongrimes.org/?p=678).
 
