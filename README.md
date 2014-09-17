@@ -93,10 +93,10 @@ Set up your Silex application something like this:
     $app['user.options'] = array();
 
     $app['security.firewalls'] = array(
-        // Ensure that the login page is accessible to all
+        /* // Ensure that the login page is accessible to all, if you set anonymous => false below.
         'login' => array(
             'pattern' => '^/user/login$',
-        ),
+        ), */
         'secured_area' => array(
             'pattern' => '^.*$',
             'anonymous' => true,
@@ -156,5 +156,5 @@ Config options
 More information
 ----------------
 
-For more information, see the [Silex SimpleUser tutorial](http://jasongrimes.org/?p=678).
+For more information, see the [Silex SimpleUser tutorial](http://www.jasongrimes.org/2014/09/simple-user-management-in-silex/).
 
