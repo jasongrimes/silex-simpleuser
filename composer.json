@@ -23,6 +23,10 @@
     },
     "autoload": {
         "psr-0": {"SimpleUser": "src/"}
+    },
+    "autoload-dev": {
+        "psr-0": {"SimpleUser\\Tests": "tests/"}
     }
+
 }
 

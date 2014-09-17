@@ -22,6 +22,8 @@ class UserManager implements UserProviderInterface
     /** @var User[] */
     protected $identityMap = array();
 
+    protected $userClass = '\SimpleUser\User';
+
     /**
      * Constructor.
      *
@@ -82,7 +84,7 @@ class UserManager implements UserProviderInterface
      */
     public function supportsClass($class)
     {
-        return $class === 'SimpleUser\User';
+        return is_subclass_of($class, 'SimpleUser\User');
     }
 
     // ----- End UserProviderInterface -----
@@ -95,7 +97,9 @@ class UserManager implements UserProviderInterface
      */
     protected function hydrateUser(array $data)
     {
-        $user = new User($data['email']);
+        $userClass = $this->getUserClass();
+
+        $user = new $userClass($data['email']);
 
         $user->setId($data['id']);
         $user->setPassword($data['password']);
@@ -123,7 +127,10 @@ class UserManager implements UserProviderInterface
      */
     public function createUser($email, $plainPassword, $name = null, $roles = array())
     {
-        $user = new User($email);
+
+        $userClass = $this->getUserClass();
+
+        $user = new $userClass($email);
 
         if (!empty($plainPassword)) {
             $this->setUserPassword($user, $plainPassword);
@@ -487,5 +494,22 @@ class UserManager implements UserProviderInterface
         } else if (is_numeric($user) && array_key_exists($user, $this->identityMap)) {
             unset($this->identityMap[$user]);
         }
+    }
+
+
+    /**
+     * @param string $userClass The class to use for the user model. Must extend SimpleUser\User.
+     */
+    public function setUserClass($userClass)
+    {
+        $this->userClass = $userClass;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUserClass()
+    {
+        return $this->userClass;
     }
 }

@@ -171,4 +171,20 @@ class UserManagerTest extends \PHPUnit_Framework_TestCase
         $this->arrayHasKey('email', $errors);
     }
 
+    public function testCustomUserClass()
+    {
+        $this->userManager->setUserClass('\SimpleUser\Tests\CustomUser');
+
+        $user = $this->userManager->createUser('test@example.com', 'password');
+        $this->assertInstanceOf('SimpleUser\Tests\CustomUser', $user);
+
+        $user->setTwitterUsername('foo');
+        $errors = $this->userManager->validate($user);
+        $this->assertArrayHasKey('twitterUsername', $errors);
+
+        $user->setTwitterUsername('@foo');
+        $errors = $this->userManager->validate($user);
+        $this->assertEmpty($errors);
+    }
+
 }

@@ -23,7 +23,16 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
      */
     public function register(Application $app)
     {
-        $app['user.manager'] = $app->share(function($app) { return new UserManager($app['db'], $app); });
+
+        $app['user.manager'] = $app->share(function($app) {
+            $userManager = new UserManager($app['db'], $app);
+            $options = $app->offsetExists('user.options') ? $app['user.options'] : array();
+            if (array_key_exists('userClass', $options)) {
+                $userManager->setUserClass($options['userClass']);
+            }
+
+            return $userManager;
+        });
 
         $app['user'] = $app->share(function($app) {
             return ($app['user.manager']->getCurrentUser());
