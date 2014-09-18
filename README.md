@@ -1,4 +1,4 @@
-Simple user provider for Silex
+Simple User Provider for Silex
 ==============================
 
 [![Build Status](https://travis-ci.org/jasongrimes/silex-simpleuser.svg?branch=master)](https://travis-ci.org/jasongrimes/silex-simpleuser)
@@ -8,29 +8,15 @@ Simple user provider for Silex
 
 A simple database-backed user provider for use with the Silex [SecurityServiceProvider](http://silex.sensiolabs.org/doc/providers/security.html).
 
-In addition to the user provider, this package also includes a controller provider that can optionally set up simple routes and controllers for form-based authentication.
+SimpleUser is intended to provide an easy way to set up user management (authentication, authorization, and user administration) in the Silex PHP micro-framework. It provides drop-in services for Silex that implement the missing user management pieces for the Security component. It includes a basic User model, a database-backed user manager, controllers and views for user administration, and various supporting features.
 
-Overview
---------
 
-SimpleUser is intended to be an easy way to get up and running with user authentication in the Silex PHP microframework.
-Silex has built-in support for the Symfony 2 Security component, which is powerful,
-but requires writing a lot of boilerplate user management code before it can be used.
-SimpleUser provides a simple implementation of this missing user management piece for the Security component.
+Demo
+----
 
-If your Silex application just needs a user authentication layer with a minimal user model,
-SimpleUser may work fine for you as-is.
-If you have more complex requirements, you may want to extend the SimpleUser classes,
-or you may prefer to fork the project and use it as a reference implementation.
-You should feel free to do either one (this is open source software under the BSD license).
+* [Online demo](http://silex-simpleuser-demo.grimesit.com/)
+* [Demo source code](https://github.com/jasongrimes/silex-simpleuser-demo)
 
-The SimpleUser package provides the following features:
-
-* A minimal `User` class which basically consists of an email, password, optional name, and support for custom fields.
-* A `UserManager` class for managing `User` objects and their persistence in an SQL database. It serves as a user provider for the Security component.
-* A controller and views for optionally handling form-based authentication and user management.
-* An `EDIT_USER` security attribute that can be used with the Security component's `isGranted()` method to allow users to edit their own accounts.
-* A Silex service provider and controller provider for automatically configuring the features above.
 
 Quick start example config
 --------------------------
@@ -130,6 +116,7 @@ You should now be able to create an account at the `/user/register` URL.
 Make the new account an administrator by editing the record directly in the database and setting the `users.roles` column to `ROLE_USER,ROLE_ADMIN`.
 (After you have one admin account, it can grant the admin role to others via the web interface.)
 
+
 Config options
 --------------
 
@@ -153,8 +140,8 @@ Config options
         ),
     );
 
+
 More information
 ----------------
 
-For more information, see the [Silex SimpleUser tutorial](http://www.jasongrimes.org/2014/09/simple-user-management-in-silex/).
-
+See the [Silex SimpleUser tutorial](http://www.jasongrimes.org/2014/09/simple-user-management-in-silex/).
