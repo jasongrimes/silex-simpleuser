@@ -84,7 +84,7 @@ class UserManager implements UserProviderInterface
      */
     public function supportsClass($class)
     {
-        return is_subclass_of($class, 'SimpleUser\User');
+        return ($class === 'SimpleUser\User') || is_subclass_of($class, 'SimpleUser\User');
     }
 
     // ----- End UserProviderInterface -----
