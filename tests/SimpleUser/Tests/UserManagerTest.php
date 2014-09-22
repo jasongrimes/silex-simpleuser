@@ -2,6 +2,7 @@
 
 namespace SimpleUser\Tests;
 
+use SimpleUser\User;
 use SimpleUser\UserManager;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
@@ -187,4 +188,38 @@ class UserManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertEmpty($errors);
     }
 
+
+    public function testSupportsBaseClass()
+    {
+        $user = $this->userManager->createUser('test@example.com', 'password');
+
+        $supportsObject = $this->userManager->supportsClass(get_class($user));
+        $this->assertTrue($supportsObject);
+
+        $this->userManager->insert($user);
+        $freshUser = $this->userManager->refreshUser($user);
+
+        $supportsRefreshedObject = $this->userManager->supportsClass(get_class($freshUser));
+        $this->assertTrue($supportsRefreshedObject);
+
+        $this->assertTrue($freshUser instanceof User);
+    }
+
+    public function testSupportsSubClass()
+    {
+        $this->userManager->setUserClass('\SimpleUser\Tests\CustomUser');
+
+        $user = $this->userManager->createUser('test@example.com', 'password');
+
+        $supportsObject = $this->userManager->supportsClass(get_class($user));
+        $this->assertTrue($supportsObject);
+
+        $this->userManager->insert($user);
+        $freshUser = $this->userManager->refreshUser($user);
+
+        $supportsRefreshedObject = $this->userManager->supportsClass(get_class($freshUser));
+        $this->assertTrue($supportsRefreshedObject);
+
+        $this->assertTrue($freshUser instanceof CustomUser);
+    }
 }
