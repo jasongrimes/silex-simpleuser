@@ -285,4 +285,17 @@ class UserManagerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue($freshUser instanceof CustomUser);
     }
+
+    public function testValidationWhenUsernameIsRequired()
+    {
+        $user = $this->userManager->createUser('test@example.com', 'password');
+        $this->userManager->setUsernameRequired(true);
+
+        $errors = $this->userManager->validate($user);
+        $this->assertArrayHasKey('username', $errors);
+
+        $user->setUsername('username');
+        $errors = $this->userManager->validate($user);
+        $this->assertEmpty($errors);
+    }
 }

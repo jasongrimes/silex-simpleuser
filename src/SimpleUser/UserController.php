@@ -28,6 +28,8 @@ class UserController
     protected $editTemplate = '@user/edit.twig';
     protected $listTemplate = '@user/list.twig';
 
+    protected $isUsernameRequired = false;
+
     protected $controllerOptions = array();
 
     /**
@@ -50,7 +52,7 @@ class UserController
      */
     public function setOptions(array $options)
     {
-        foreach (array('layoutTemplate', 'loginTemplate', 'registerTemplate', 'viewTemplate', 'editTemplate', 'listTemplate')
+        foreach (array('layoutTemplate', 'loginTemplate', 'registerTemplate', 'viewTemplate', 'editTemplate', 'listTemplate', 'isUsernameRequired')
                  as $property)
         {
             if (array_key_exists($property, $options)) {
@@ -162,6 +164,8 @@ class UserController
             'error' => isset($error) ? $error : null,
             'name' => $request->request->get('name'),
             'email' => $request->request->get('email'),
+            'username' => $request->request->get('username'),
+            'isUsernameRequired' => $this->isUsernameRequired,
         ));
     }
 
@@ -180,6 +184,10 @@ class UserController
             $request->request->get('email'),
             $request->request->get('password'),
             $request->request->get('name') ?: null);
+
+        if ($username = $request->request->get('username')) {
+            $user->setUsername($username);
+        }
 
         $errors = $this->userManager->validate($user);
         if (!empty($errors)) {
@@ -257,6 +265,9 @@ class UserController
         if ($request->isMethod('POST')) {
             $user->setName($request->request->get('name'));
             $user->setEmail($request->request->get('email'));
+            if ($request->request->has('username')) {
+                $user->setUsername($request->request->get('username'));
+            }
             if ($request->request->get('password')) {
                 if ($request->request->get('password') != $request->request->get('confirm_password')) {
                     $errors['password'] = 'Passwords don\'t match.';
@@ -290,12 +301,13 @@ class UserController
             'available_roles' => array('ROLE_USER', 'ROLE_ADMIN'),
             'image_url' => $this->getGravatarUrl($user->getEmail()),
             'customFields' => $customFields,
+            'isUsernameRequired' => $this->isUsernameRequired,
         ));
     }
 
     public function listAction(Application $app, Request $request)
     {
-        $order_by = $request->get('order_by') ?: 'id';
+        $order_by = $request->get('order_by') ?: 'name';
         $order_dir = $request->get('order_dir') == 'DESC' ? 'DESC' : 'ASC';
         $limit = $request->get('limit') ?: 50;
         $page = $request->get('page') ?: 1;
@@ -314,24 +326,6 @@ class UserController
         foreach ($users as $user) {
             $user->imageUrl = $this->getGravatarUrl($user->getEmail(), 40);
         }
-
-        /*
-        $nextUrl = $prevUrl = null;
-        if ($numResults > $limit) {
-            $nextOffset = ($offset + $limit) < $numResults  ? $offset + $limit : null;
-            $prevOffset = $offset > 0 ? (($offset - $limit) > 0 ? $offset - $limit : 0) : null;
-
-            $baseUrl = $app['url_generator']->generate('user.list') . '?limit=' . $limit . '&order_by=' . $order_by . '&order_dir=' . $order_dir;
-            if ($nextOffset !== null) {
-                $nextUrl = $baseUrl . '&offset=' . $nextOffset;
-            }
-            if ($prevOffset !== null) {
-                $prevUrl = $baseUrl . '&offset=' . $prevOffset;
-            }
-        }
-        $firstResult = $offset + 1;
-        $lastResult = ($offset + $limit) > $numResults ? $numResults : $offset + $limit;
-        */
 
         return $app['twig']->render($this->listTemplate, array(
             'layout_template' => $this->layoutTemplate,

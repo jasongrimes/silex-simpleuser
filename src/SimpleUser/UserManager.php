@@ -22,7 +22,11 @@ class UserManager implements UserProviderInterface
     /** @var User[] */
     protected $identityMap = array();
 
+    /** @var string */
     protected $userClass = '\SimpleUser\User';
+
+    /** @var bool */
+    protected $isUsernameRequired = false;
 
     /**
      * Constructor.
@@ -498,6 +502,11 @@ class UserManager implements UserProviderInterface
             }
         }
 
+        // If username is required, ensure it is set.
+        if ($this->isUsernameRequired && !$user->getRealUsername()) {
+            $errors['username'] = 'Username is required.';
+        }
+
         return $errors;
     }
 
@@ -535,5 +544,15 @@ class UserManager implements UserProviderInterface
     public function getUserClass()
     {
         return $this->userClass;
+    }
+
+    public function setUsernameRequired($isRequired)
+    {
+        $this->isUsernameRequired = (bool) $isRequired;
+    }
+
+    public function getUsernameRequired()
+    {
+        return $this->isUsernameRequired;
     }
 }

@@ -199,6 +199,16 @@ class User implements UserInterface, \Serializable
     }
 
     /**
+     * Test whether username has ever been set (even if it's currently empty).
+     *
+     * @return bool
+     */
+    public function hasRealUsername()
+    {
+        return $this->hasCustomField('username');
+    }
+
+    /**
      * @param string $username
      */
     public function setUsername($username)

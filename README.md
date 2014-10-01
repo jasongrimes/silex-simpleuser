@@ -23,13 +23,9 @@ Quick start example config
 
 This configuration should work out of the box to get you up and running quickly. See below for additional details.
 
-Add this to your composer.json and then run `composer update`:
+Install with composer:
 
-    "require": {
-        "silex/silex": "~1.0",
-        "symfony/twig-bridge": "~2.3",
-        "jasongrimes/silex-simpleuser": "~1.0"
-    }
+    composer require "jasongrimes/silex-simpleuser:~1.0"
 
 Set up your Silex application something like this:
 
@@ -62,9 +58,11 @@ Set up your Silex application something like this:
     // Controllers
     //
 
+    // Mount the user controller routes:
     $app->mount('/user', $simpleUserProvider);
 
     /*
+    // Other routes and controllers...
     $app->get('/', function () use ($app) {
         return $app['twig']->render('index.twig', array());
     });
@@ -76,6 +74,7 @@ Set up your Silex application something like this:
     // Configuration
     //
 
+    // SimpleUser options
     $app['user.options'] = array();
 
     $app['security.firewalls'] = array(
@@ -123,6 +122,10 @@ Config options
     $app['user.options'] = array(
         // Custom user class
         'userClass' => 'My\User',
+
+        // Whether to require that users have a username (default: false).
+        // Signing in by email address is also supported.
+        'isUsernameRequired' => false,
 
         // Custom templates
         'layoutTemplate'   => 'layout.twig',

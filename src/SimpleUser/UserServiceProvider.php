@@ -30,6 +30,9 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             if (array_key_exists('userClass', $options)) {
                 $userManager->setUserClass($options['userClass']);
             }
+            if (array_key_exists('isUsernameRequired', $options)) {
+                $userManager->setUsernameRequired($options['isUsernameRequired']);
+            }
 
             return $userManager;
         });
