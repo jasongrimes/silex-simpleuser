@@ -24,9 +24,9 @@
         <form class="form-horizontal" method="POST" action="{{ path('user.login_check') }}">
 
             <div class="form-group">
-                <label class="col-sm-2 control-label" for="inputEmail">Email</label>
+                <label class="col-sm-2 control-label" for="inputEmail">Email or username</label>
                 <div class="col-sm-6">
-                    <input class="form-control" name="_username" type="email" id="inputEmail" placeholder="Email" required value="{{ last_username }}">
+                    <input class="form-control" name="_username" type="text" id="inputEmail" placeholder="Email" required value="{{ last_username }}">
                 </div>
             </div>
 
