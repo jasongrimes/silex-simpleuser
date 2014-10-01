@@ -39,7 +39,9 @@ class UserManager implements UserProviderInterface
     // ----- UserProviderInterface -----
 
     /**
-     * Loads the user for the given username.
+     * Loads the user for the given username or email address.
+     *
+     * Required by UserProviderInterface.
      *
      * @param string $username The username
      * @return UserInterface
@@ -47,9 +49,18 @@ class UserManager implements UserProviderInterface
      */
     public function loadUserByUsername($username)
     {
-        $user = $this->findOneBy(array('email' => $username));
+        if (strpos($username, '@') !== false) {
+            $user = $this->findOneBy(array('email' => $username));
+            if (!$user) {
+                throw new UsernameNotFoundException(sprintf('Email "%s" does not exist.', $username));
+            }
+
+            return $user;
+        }
+
+        $user = $this->findOneBy(array('customFields' => array('username' => $username)));
         if (!$user) {
-            throw new UsernameNotFoundException(sprintf('Email "%s" does not exist.', $username));
+            throw new UsernameNotFoundException(sprintf('Username "%s" does not exist.', $username));
         }
 
         return $user;
@@ -455,7 +466,8 @@ class UserManager implements UserProviderInterface
     /**
      * Validate a user object.
      *
-     * Invokes User::validate(), and additionally tests that the User's email address isn't associated with another User.
+     * Invokes User::validate(),
+     * and additionally tests that the User's email address and username (if set) are unique across all Users.
      *
      * @param User $user
      * @return array An array of error messages, or an empty array if the User is valid.
@@ -464,6 +476,7 @@ class UserManager implements UserProviderInterface
     {
         $errors = $user->validate();
 
+        // Ensure email address is unique.
         $duplicates = $this->findBy(array('email' => $user->getEmail()));
         if (!empty($duplicates)) {
             foreach ($duplicates as $dup) {
@@ -471,6 +484,17 @@ class UserManager implements UserProviderInterface
                     continue;
                 }
                 $errors['email'] = 'An account with that email address already exists.';
+            }
+        }
+
+        // Ensure username is unique.
+        $duplicates = $this->findBy(array('customFields' => array('username' => $user->getRealUsername())));
+        if (!empty($duplicates)) {
+            foreach ($duplicates as $dup) {
+                if ($user->getId() && $dup->getId() == $user->getId()) {
+                    continue;
+                }
+                $errors['username'] = 'An account with that username already exists.';
             }
         }
 
