@@ -9,6 +9,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use InvalidArgumentException;
+use JasonGrimes\Paginator;
 
 /**
  * Controller with actions for handling form-based authentication and user management.
@@ -294,22 +295,27 @@ class UserController
 
     public function listAction(Application $app, Request $request)
     {
-        $limit = $request->get('limit') ?: 50;
-        $offset = $request->get('offset') ?: 0;
         $order_by = $request->get('order_by') ?: 'id';
         $order_dir = $request->get('order_dir') == 'DESC' ? 'DESC' : 'ASC';
-
-        $numResults = $this->userManager->findCount();
+        $limit = $request->get('limit') ?: 50;
+        $page = $request->get('page') ?: 1;
+        $offset = ($page - 1) * $limit;
 
         $users = $this->userManager->findBy(array(), array(
             'limit' => array($offset, $limit),
             'order_by' => array($order_by, $order_dir),
         ));
+        $numResults = $this->userManager->findCount();
+
+        $paginator = new Paginator($numResults, $limit, $page,
+            $app['url_generator']->generate('user.list') . '?page=(:num)&limit=' . $limit . '&order_by=' . $order_by . '&order_dir=' . $order_dir
+        );
 
         foreach ($users as $user) {
             $user->imageUrl = $this->getGravatarUrl($user->getEmail(), 40);
         }
 
+        /*
         $nextUrl = $prevUrl = null;
         if ($numResults > $limit) {
             $nextOffset = ($offset + $limit) < $numResults  ? $offset + $limit : null;
@@ -325,16 +331,19 @@ class UserController
         }
         $firstResult = $offset + 1;
         $lastResult = ($offset + $limit) > $numResults ? $numResults : $offset + $limit;
+        */
 
         return $app['twig']->render($this->listTemplate, array(
             'layout_template' => $this->layoutTemplate,
             'users' => $users,
-            'numResults' => $numResults,
-            'nextUrl' => $nextUrl,
-            'prevUrl' => $prevUrl,
-            'firstResult' => $firstResult,
-            'lastResult' => $lastResult,
+            'paginator' => $paginator,
+            // The following variables are no longer used in the default template,
+            // but are retained for backward compatibility.
+            'numResults' => $paginator->getTotalItems(),
+            'nextUrl' => $paginator->getNextUrl(),
+            'prevUrl' => $paginator->getPrevUrl(),
+            'firstResult' => $paginator->getCurrentPageFirstItem(),
+            'lastResult' => $paginator->getCurrentPageLastItem(),
         ));
-
     }
 }
