@@ -309,8 +309,8 @@ class UserController
     {
         $order_by = $request->get('order_by') ?: 'name';
         $order_dir = $request->get('order_dir') == 'DESC' ? 'DESC' : 'ASC';
-        $limit = $request->get('limit') ?: 50;
-        $page = $request->get('page') ?: 1;
+        $limit = (int)($request->get('limit') ?: 50);
+        $page = (int)($request->get('page') ?: 1);
         $offset = ($page - 1) * $limit;
 
         $users = $this->userManager->findBy(array(), array(
