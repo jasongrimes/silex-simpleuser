@@ -146,11 +146,7 @@ class UserController
                 $app['session']->getFlashBag()->set('alert', 'Account created.');
 
                 // Log the user in to the new account.
-                if (null !== ($current_token = $app['security']->getToken())) {
-                    $providerKey = method_exists($current_token, 'getProviderKey') ? $current_token->getProviderKey() : $current_token->getKey();
-                    $token = new UsernamePasswordToken($user, null, $providerKey);
-                    $app['security']->setToken($token);
-                }
+                $this->userManager->loginAsUser($user);
 
                 return $app->redirect($app['url_generator']->generate('user.view', array('id' => $user->getId())));
 
