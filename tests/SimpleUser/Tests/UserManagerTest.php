@@ -3,11 +3,14 @@
 namespace SimpleUser\Tests;
 
 use SimpleUser\User;
+use SimpleUser\UserEvent;
+use SimpleUser\UserEvents;
 use SimpleUser\UserManager;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\SecurityServiceProvider;
 use Doctrine\DBAL\Connection;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 
 class UserManagerTest extends \PHPUnit_Framework_TestCase
@@ -21,6 +24,9 @@ class UserManagerTest extends \PHPUnit_Framework_TestCase
      * @var Connection
      */
     protected $conn;
+
+    /** @var EventDispatcher */
+    protected $dispatcher;
 
     public function setUp()
     {
@@ -36,6 +42,7 @@ class UserManagerTest extends \PHPUnit_Framework_TestCase
 
         $this->userManager = new UserManager($app['db'], $app);
         $this->conn = $app['db'];
+        $this->dispatcher = $app['dispatcher'];
     }
 
     public function testCreateUser()
@@ -297,5 +304,85 @@ class UserManagerTest extends \PHPUnit_Framework_TestCase
         $user->setUsername('username');
         $errors = $this->userManager->validate($user);
         $this->assertEmpty($errors);
+    }
+
+    public function testBeforeInsertEvents()
+    {
+        $this->dispatcher->addListener(UserEvents::BEFORE_INSERT, function(UserEvent $event) {
+           $event->getUser()->setCustomField('foo', 'bar');
+        });
+
+        $user = $this->userManager->createUser('test@example.com', 'password');
+
+        // After insert, the custom field set by the listener is available.
+        $this->assertFalse($user->hasCustomField('foo'));
+        $this->userManager->insert($user);
+        $this->assertEquals('bar', $user->getCustomField('foo'));
+
+        // The user was stored with the custom field (since we set it BEFORE insert).
+        $this->userManager->clearIdentityMap(); // Clear the cache to force a fresh lookup from the database.
+        $storedUser = $this->userManager->getUser($user->getId());
+        $this->assertEquals('bar', $storedUser->getCustomField('foo'));
+    }
+
+    public function testAfterInsertEvents()
+    {
+        $this->dispatcher->addListener(UserEvents::AFTER_INSERT, function(UserEvent $event) {
+            $event->getUser()->setCustomField('foo', 'bar');
+        });
+
+        $user = $this->userManager->createUser('test@example.com', 'password');
+
+        // After insert, the custom field set by the listener is available.
+        $this->assertFalse($user->hasCustomField('foo'));
+        $this->userManager->insert($user);
+        $this->assertEquals('bar', $user->getCustomField('foo'));
+
+        // The user was NOT stored with the custom field (because we set it AFTER insert).
+        // We'd have to save it again from within the after listener for it to be stored.
+        $this->userManager->clearIdentityMap(); // Clear the cache to force a fresh lookup from the database.
+        $storedUser = $this->userManager->getUser($user->getId());
+        $this->assertFalse($storedUser->hasCustomField('foo'));
+    }
+
+    public function testBeforeUpdateEvents()
+    {
+        $this->dispatcher->addListener(UserEvents::BEFORE_UPDATE, function(UserEvent $event) {
+            $event->getUser()->setCustomField('foo', 'bar');
+        });
+
+        $user = $this->userManager->createUser('test@example.com', 'password');
+        $this->userManager->insert($user);
+
+        // After update, the custom field set by the listener is available.
+        $this->assertFalse($user->hasCustomField('foo'));
+        $this->userManager->update($user);
+        $this->assertEquals('bar', $user->getCustomField('foo'));
+
+        // The user was stored with the custom field (since we set it BEFORE insert).
+        $this->userManager->clearIdentityMap(); // Clear the cache to force a fresh lookup from the database.
+        $storedUser = $this->userManager->getUser($user->getId());
+        $this->assertEquals('bar', $storedUser->getCustomField('foo'));
+    }
+
+    public function testAfterUpdateEvents()
+    {
+        $this->dispatcher->addListener(UserEvents::AFTER_UPDATE, function(UserEvent $event) {
+            $event->getUser()->setCustomField('foo', 'bar');
+        });
+
+        $user = $this->userManager->createUser('test@example.com', 'password');
+        $this->userManager->insert($user);
+
+        // After update, the custom field set by the listener is available on the existing user instance.
+        $this->assertFalse($user->hasCustomField('foo'));
+        $this->userManager->update($user);
+        $this->assertEquals('bar', $user->getCustomField('foo'));
+
+        // The user was NOT stored with the custom field (because we set it AFTER update).
+        // We'd have to save it again from within the after listener for it to be stored.
+        $this->userManager->clearIdentityMap(); // Clear the cache to force a fresh lookup from the database.
+        $storedUser = $this->userManager->getUser($user->getId());
+        $this->assertFalse($storedUser->hasCustomField('foo'));
     }
 }

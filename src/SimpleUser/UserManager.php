@@ -2,6 +2,7 @@
 
 namespace SimpleUser;
 
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface;
@@ -18,6 +19,9 @@ class UserManager implements UserProviderInterface
 
     /** @var \Silex\Application */
     protected $app;
+
+    /** @var EventDispatcher */
+    protected $dispatcher;
 
     /** @var User[] */
     protected $identityMap = array();
@@ -38,6 +42,7 @@ class UserManager implements UserProviderInterface
     {
         $this->conn = $conn;
         $this->app = $app;
+        $this->dispatcher = $app['dispatcher'];
     }
 
     // ----- UserProviderInterface -----
@@ -390,6 +395,8 @@ class UserManager implements UserProviderInterface
      */
     public function insert(User $user)
     {
+        $this->dispatcher->dispatch(UserEvents::BEFORE_INSERT, new UserEvent($user));
+
         $sql = 'INSERT INTO users (email, password, salt, name, roles, time_created) VALUES (:email, :password, :salt, :name, :roles, :timeCreated) ';
 
         $params = array(
@@ -408,6 +415,8 @@ class UserManager implements UserProviderInterface
         $this->saveUserCustomFields($user);
 
         $this->identityMap[$user->getId()] = $user;
+
+        $this->dispatcher->dispatch(UserEvents::AFTER_INSERT, new UserEvent($user));
     }
 
     /**
@@ -417,6 +426,8 @@ class UserManager implements UserProviderInterface
      */
     public function update(User $user)
     {
+        $this->dispatcher->dispatch(UserEvents::BEFORE_UPDATE, new UserEvent($user));
+
         $sql = 'UPDATE users
             SET email = :email
             , password = :password
@@ -439,6 +450,8 @@ class UserManager implements UserProviderInterface
         $this->conn->executeUpdate($sql, $params);
 
         $this->saveUserCustomFields($user);
+
+        $this->dispatcher->dispatch(UserEvents::AFTER_UPDATE, new UserEvent($user));
     }
 
     /**
@@ -461,10 +474,14 @@ class UserManager implements UserProviderInterface
      */
     public function delete(User $user)
     {
+        $this->dispatcher->dispatch(UserEvents::BEFORE_DELETE, new UserEvent($user));
+
         $this->clearIdentityMap($user);
 
         $this->conn->executeUpdate('DELETE FROM users WHERE id = ?', array($user->getId()));
         $this->conn->executeUpdate('DELETE FROM user_custom_fields WHERE user_id = ?', array($user->getId()));
+
+        $this->dispatcher->dispatch(UserEvents::AFTER_DELETE, new UserEvent($user));
     }
 
     /**
@@ -554,5 +571,21 @@ class UserManager implements UserProviderInterface
     public function getUsernameRequired()
     {
         return $this->isUsernameRequired;
+    }
+
+    /**
+     * Log in as the given user.
+     *
+     * Sets the security token for the current request so it will be logged in as the given user.
+     *
+     * @param User $user
+     */
+    public function loginAsUser(User $user)
+    {
+        if (null !== ($current_token = $this->app['security']->getToken())) {
+            $providerKey = method_exists($current_token, 'getProviderKey') ? $current_token->getProviderKey() : $current_token->getKey();
+            $token = new UsernamePasswordToken($user, null, $providerKey);
+            $this->app['security']->setToken($token);
+        }
     }
 }
