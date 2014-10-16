@@ -2,14 +2,14 @@
 
 namespace SimpleUser;
 
-use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\AdvancedUserInterface;
 
 /**
  * A simple User model.
  *
  * @package SimpleUser
  */
-class User implements UserInterface, \Serializable
+class User implements AdvancedUserInterface, \Serializable
 {
     protected $id;
     protected $email;
@@ -397,5 +397,89 @@ class User implements UserInterface, \Serializable
     }
 
 
+    /**
+     * Checks whether the user's account has expired.
+     *
+     * Internally, if this method returns false, the authentication system
+     * will throw an AccountExpiredException and prevent login.
+     *
+     * @return bool    true if the user's account is non expired, false otherwise
+     *
+     * @see AccountExpiredException
+     */
+    public function isAccountNonExpired()
+    {
+        return true;
+    }
 
+    /**
+     * Checks whether the user is locked.
+     *
+     * Internally, if this method returns false, the authentication system
+     * will throw a LockedException and prevent login.
+     *
+     * @return bool    true if the user is not locked, false otherwise
+     *
+     * @see LockedException
+     */
+    public function isAccountNonLocked()
+    {
+        return true;
+    }
+
+    /**
+     * Checks whether the user's credentials (password) has expired.
+     *
+     * Internally, if this method returns false, the authentication system
+     * will throw a CredentialsExpiredException and prevent login.
+     *
+     * @return bool    true if the user's credentials are non expired, false otherwise
+     *
+     * @see CredentialsExpiredException
+     */
+    public function isCredentialsNonExpired()
+    {
+        return true;
+    }
+
+    /**
+     * Checks whether the user is enabled.
+     *
+     * Internally, if this method returns false, the authentication system
+     * will throw a DisabledException and prevent login.
+     *
+     * Users are enabled by default.
+     *
+     * @return bool    true if the user is enabled, false otherwise
+     *
+     * @see DisabledException
+     */
+    public function isEnabled()
+    {
+        if ($this->hasCustomField('su:isEnabled') && !$this->getCustomField('su:isEnabled')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Set whether the user is enabled.
+     *
+     * @param bool $isEnabled
+     */
+    public function setEnabled($isEnabled)
+    {
+        $this->setCustomField('su:isEnabled', (bool) $isEnabled);
+    }
+
+    public function setConfirmationToken($token)
+    {
+        $this->setCustomField('su:confirmationToken', $token);
+    }
+
+    public function getConfirmationToken()
+    {
+        return $this->getCustomField('su:confirmationToken');
+    }
 }

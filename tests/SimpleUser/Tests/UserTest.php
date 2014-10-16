@@ -81,4 +81,22 @@ class UserTest extends \PHPUnit_Framework_TestCase
             array(array('setName' => str_repeat('x', 101)), array('name')),
         );
     }
+
+    public function testUserIsEnabledByDefault()
+    {
+        $user = new User('test@example.com');
+
+        $this->assertTrue($user->isEnabled());
+    }
+
+    public function testUserIsDisabled()
+    {
+        $user = new User('test@example.com');
+
+        $user->setEnabled(false);
+        $this->assertFalse($user->isEnabled());
+
+        $user->setEnabled(true);
+        $this->assertTrue($user->isEnabled());
+    }
 }

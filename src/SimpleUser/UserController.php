@@ -9,6 +9,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use InvalidArgumentException;
 use JasonGrimes\Paginator;
+use Symfony\Component\Security\Core\Exception\DisabledException;
 
 /**
  * Controller with actions for handling form-based authentication and user management.
@@ -23,11 +24,14 @@ class UserController
     protected $layoutTemplate = '@user/layout.twig';
     protected $loginTemplate = '@user/login.twig';
     protected $registerTemplate = '@user/register.twig';
+    protected $registerConfirmationSentTemplate = '@user/register-confirmation-sent.twig';
+    protected $confirmationNeededTemplate = '@user/confirmation-needed.twig';
     protected $viewTemplate = '@user/view.twig';
     protected $editTemplate = '@user/edit.twig';
     protected $listTemplate = '@user/list.twig';
 
     protected $isUsernameRequired = false;
+    protected $isEmailConfirmationRequired = false;
 
     protected $controllerOptions = array();
 
@@ -46,12 +50,18 @@ class UserController
         }
     }
 
+    public function setEmailConfirmationRequired($isRequired)
+    {
+        $this->isEmailConfirmationRequired = (bool) $isRequired;
+    }
+
     /**
      * @param array $options
      */
     public function setOptions(array $options)
     {
-        foreach (array('layoutTemplate', 'loginTemplate', 'registerTemplate', 'viewTemplate', 'editTemplate', 'listTemplate', 'isUsernameRequired')
+        foreach (array('layoutTemplate', 'loginTemplate', 'registerTemplate', 'registerConfirmationSentTemplate',
+                     'viewTemplate', 'editTemplate', 'listTemplate', 'isUsernameRequired')
                  as $property)
         {
             if (array_key_exists($property, $options)) {
@@ -113,23 +123,6 @@ class UserController
     }
 
     /**
-     * Login action.
-     *
-     * @param Application $app
-     * @param Request $request
-     * @return Response
-     */
-    public function loginAction(Application $app, Request $request)
-    {
-        return $app['twig']->render($this->loginTemplate, array(
-            'layout_template' => $this->layoutTemplate,
-            'error' => $app['security.last_error']($request),
-            'last_username' => $app['session']->get('_security.last_username'),
-            'allowRememberMe' => isset($app['security.remember_me.response_listener']),
-        ));
-    }
-
-    /**
      * Register action.
      *
      * @param Application $app
@@ -141,13 +134,29 @@ class UserController
         if ($request->isMethod('POST')) {
             try {
                 $user = $this->createUserFromRequest($request);
+                if ($this->isEmailConfirmationRequired) {
+                    $user->setEnabled(false);
+                    $user->setConfirmationToken($app['user.tokenGenerator']->generateToken());
+                }
                 $this->userManager->insert($user);
                 $app['session']->getFlashBag()->set('alert', 'Account created.');
 
-                // Log the user in to the new account.
-                $this->userManager->loginAsUser($user);
+                if ($this->isEmailConfirmationRequired) {
+                    // Send email confirmation.
+                    $app['user.mailer']->sendConfirmationMessage($user);
 
-                return $app->redirect($app['url_generator']->generate('user.view', array('id' => $user->getId())));
+                    // Render the "go check your email" page.
+                    return $app['twig']->render($this->registerConfirmationSentTemplate, array(
+                        'layout_template' => $this->layoutTemplate,
+                        'email' => $user->getEmail(),
+                    ));
+                } else {
+                    // Log the user in to the new account.
+                    $this->userManager->loginAsUser($user);
+
+                    // Redirect to user's new profile page.
+                    return $app->redirect($app['url_generator']->generate('user.view', array('id' => $user->getId())));
+                }
 
             } catch (InvalidArgumentException $e) {
                 $error = $e->getMessage();
@@ -161,6 +170,84 @@ class UserController
             'email' => $request->request->get('email'),
             'username' => $request->request->get('username'),
             'isUsernameRequired' => $this->isUsernameRequired,
+        ));
+    }
+
+    /**
+     * Handle email confirmation links.
+     *
+     * @param Application $app
+     * @param Request $request
+     * @param string $token
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     */
+    public function confirmEmailAction(Application $app, Request $request, $token)
+    {
+        $user = $this->userManager->findOneBy(array('customFields' => array('su:confirmationToken' => $token)));
+        if (!$user) {
+            throw new NotFoundHttpException('Invalid confirmation token. Please check the link and try again.');
+        }
+
+        $user->setConfirmationToken(null);
+        $user->setEnabled(true);
+        $this->userManager->update($user);
+
+        $this->userManager->loginAsUser($user);
+
+        $app['session']->getFlashBag()->set('alert', 'Thank you! Your account has been activated.');
+
+        return $app->redirect($app['url_generator']->generate('user.view', array('id' => $user->getId())));
+    }
+
+    /**
+     * Login action.
+     *
+     * @param Application $app
+     * @param Request $request
+     * @return Response
+     */
+    public function loginAction(Application $app, Request $request)
+    {
+        $authException = $app['user.last_auth_exception']($request);
+        if ($authException instanceof DisabledException) {
+            $user = $this->userManager->refreshUser($authException->getUser());
+
+            return $app['twig']->render($this->confirmationNeededTemplate, array(
+                'layout_template' => $this->layoutTemplate,
+                'email' => $user->getEmail(),
+                'fromAddress' => $app['user.mailer']->getFromAddress(),
+                'resendUrl' => $app['url_generator']->generate('user.resend-confirmation'),
+            ));
+        }
+
+        return $app['twig']->render($this->loginTemplate, array(
+            'layout_template' => $this->layoutTemplate,
+            'error' => $authException ? $authException->getMessage() : null, // $app['security.last_error']($request),
+            'last_username' => $app['session']->get('_security.last_username'),
+            'allowRememberMe' => isset($app['security.remember_me.response_listener']),
+        ));
+    }
+
+    public function resendConfirmationAction(Application $app, Request $request)
+    {
+        $email = $request->request->get('email');
+        $user = $this->userManager->findOneBy(array('email' => $email));
+        if (!$user) {
+            throw new NotFoundHttpException('No user found with that email address.');
+        }
+
+        if (!$user->getConfirmationToken()) {
+            $user->setConfirmationToken($app['user.tokenGenerator']->generateToken());
+            $this->userManager->update($user);
+        }
+
+        $app['user.mailer']->sendConfirmationMessage($user);
+
+        // Render the "go check your email" page.
+        return $app['twig']->render($this->registerConfirmationSentTemplate, array(
+            'layout_template' => $this->layoutTemplate,
+            'email' => $user->getEmail(),
         ));
     }
 
@@ -326,6 +413,7 @@ class UserController
             'layout_template' => $this->layoutTemplate,
             'users' => $users,
             'paginator' => $paginator,
+
             // The following variables are no longer used in the default template,
             // but are retained for backward compatibility.
             'numResults' => $paginator->getTotalItems(),
@@ -335,4 +423,5 @@ class UserController
             'lastResult' => $paginator->getCurrentPageLastItem(),
         ));
     }
+
 }

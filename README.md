@@ -47,6 +47,7 @@ Set up your Silex application something like this:
     $app->register(new Provider\ServiceControllerServiceProvider());
     $app->register(new Provider\UrlGeneratorServiceProvider());
     $app->register(new Provider\TwigServiceProvider());
+    $app->register(new Provider\SwiftmailerServiceProvider());
 
     // Register the SimpleUser service provider.
     $simpleUserProvider = new SimpleUser\UserServiceProvider();
@@ -74,9 +75,10 @@ Set up your Silex application something like this:
     // Configuration
     //
 
-    // SimpleUser options
+    // SimpleUser options. See config reference below for details.
     $app['user.options'] = array();
 
+    // Security config. See http://silex.sensiolabs.org/doc/providers/security.html for details.
     $app['security.firewalls'] = array(
         /* // Ensure that the login page is accessible to all, if you set anonymous => false below.
         'login' => array(
@@ -97,6 +99,10 @@ Set up your Silex application something like this:
         ),
     );
 
+    // Mailer config. See http://silex.sensiolabs.org/doc/providers/swiftmailer.html
+    $app['swiftmailer.options'] = array();
+
+    // Database config. See http://silex.sensiolabs.org/doc/providers/doctrine.html
     $app['db.options'] = array(
         'driver'   => 'pdo_mysql',
         'host' => 'localhost',
@@ -124,13 +130,14 @@ Config options
         'userClass' => 'My\User',
 
         // Whether to require that users have a username (default: false).
-        // Signing in by email address is also supported.
+        // By default, users sign in with their email address instead.
         'isUsernameRequired' => false,
 
         // Custom templates
         'layoutTemplate'   => 'layout.twig',
         'loginTemplate'    => 'login.twig',
         'registerTemplate' => 'register.twig',
+        'registerConfirmationSentTemplate' => 'registerConfirmationSent.twig',
         'viewTemplate'     => 'view.twig',
         'editTemplate'     => 'edit.twig',
         'listTemplate'     => 'list.twig',
@@ -140,6 +147,26 @@ Config options
             'edit' => array(
                 'customFields' => array('field' => 'Label'),
             ),
+        ),
+
+        'mailer' => array(
+            'enabled' => true, // Set to false to disable sending email notifications.
+            'fromEmail' => array(
+                'address' => 'support@example.com',
+                'name' => 'Your Organization',
+            ),
+        ),
+
+        // Email confirmation options.
+        'emailConfirmation' => array(
+            'required' => false, // Whether to require email confirmation before enabling new accounts.
+            'template' => 'email/confirm-email.twig',
+        ),
+
+        // Password reset options.
+        'passwordReset' => array(
+            'template' => 'email/reset-password.twig',
+            'tokenTTL' => 86400, // How many seconds the reset token is valid for. Default: 1 day.
         ),
     );
 

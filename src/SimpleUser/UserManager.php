@@ -547,7 +547,6 @@ class UserManager implements UserProviderInterface
         }
     }
 
-
     /**
      * @param string $userClass The class to use for the user model. Must extend SimpleUser\User.
      */
@@ -587,6 +586,8 @@ class UserManager implements UserProviderInterface
             $providerKey = method_exists($current_token, 'getProviderKey') ? $current_token->getProviderKey() : $current_token->getKey();
             $token = new UsernamePasswordToken($user, null, $providerKey);
             $this->app['security']->setToken($token);
+
+            $this->app['user'] = $user;
         }
     }
 }

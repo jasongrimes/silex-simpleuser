@@ -2,6 +2,7 @@
 
 namespace SimpleUser\Tests;
 
+use SimpleUser\TokenGenerator;
 use SimpleUser\User;
 use SimpleUser\UserEvent;
 use SimpleUser\UserEvents;

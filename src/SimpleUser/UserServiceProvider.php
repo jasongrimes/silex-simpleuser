@@ -8,11 +8,20 @@ use Silex\ControllerProviderInterface;
 use Silex\ControllerCollection;
 use Silex\ServiceControllerResolver;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
+use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Security\Core\AuthenticationEvents;
 use Symfony\Component\Security\Core\Authorization\Voter\RoleHierarchyVoter;
+use Symfony\Component\Security\Core\Event\AuthenticationEvent;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use \Swift_Mailer;
+use Symfony\Component\Security\Core\Exception\DisabledException;
+use Symfony\Component\Security\Core\SecurityContextInterface;
 
 class UserServiceProvider implements ServiceProviderInterface, ControllerProviderInterface
 {
+    protected $warnings = array();
+
     /**
      * Registers services on the given app.
      *
@@ -23,16 +32,64 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
      */
     public function register(Application $app)
     {
+        $app['user.options.default'] = array(
+            'userClass' => 'SimpleUser\User',
+
+            // Whether to require that users have a username (default: false).
+            // By default, users sign in with their email address instead.
+            'isUsernameRequired' => false,
+
+            'layoutTemplate'   => '@user/layout.twig',
+            'loginTemplate'    => '@user/login.twig',
+            'registerTemplate' => '@user/register.twig',
+            'registerConfirmationSentTemplate' => '@user/register-confirmation-sent.twig',
+            'confirmationNeededTemplate' => '@user/confirmation-needed.twig',
+            'viewTemplate'     => '@user/view.twig',
+            'editTemplate'     => '@user/edit.twig',
+            'listTemplate'     => '@user/list.twig',
+
+            'controllers' => array(
+                'edit' => array(
+                    'customFields' => array(),
+                ),
+            ),
+
+            'mailer' => array(
+                'enabled' => true, // Set to false to disable sending email notifications.
+                'fromEmail' => array(
+                    'address' => null,
+                    'name' => null,
+                ),
+            ),
+
+            'emailConfirmation' => array(
+                'required' => false, // Whether to require email confirmation before enabling new accounts.
+                'template' => '@user/email/confirm-email.twig',
+            ),
+
+            // Password reset options.
+            'passwordReset' => array(
+                'template' => '@user/email/reset-password.twig',
+                'tokenTTL' => 86400, // How many seconds the reset token is valid for. Default: 1 day.
+            ),
+        );
+
+        $app['user.options.init'] = $app->protect(function() use ($app) {
+            $options = $app['user.options.default'];
+            if (isset($app['user.options'])) {
+                $options = array_replace_recursive($options, $app['user.options']);
+            }
+            $app['user.options'] = $options;
+        });
+
+        $app['user.tokenGenerator'] = $app->share(function($app) { return new TokenGenerator($app['logger']); });
 
         $app['user.manager'] = $app->share(function($app) {
+            $app['user.options.init']();
+
             $userManager = new UserManager($app['db'], $app);
-            $options = $app->offsetExists('user.options') ? $app['user.options'] : array();
-            if (array_key_exists('userClass', $options)) {
-                $userManager->setUserClass($options['userClass']);
-            }
-            if (array_key_exists('isUsernameRequired', $options)) {
-                $userManager->setUsernameRequired($options['isUsernameRequired']);
-            }
+            $userManager->setUserClass($app['user.options']['userClass']);
+            $userManager->setUsernameRequired($app['user.options']['isUsernameRequired']);
 
             return $userManager;
         });
@@ -42,8 +99,36 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         });
 
         $app['user.controller'] = $app->share(function ($app) {
-            $options = $app->offsetExists('user.options') ? $app['user.options'] : array();
-            return new UserController($app['user.manager'], $options);
+            $app['user.options.init']();
+
+            $controller = new UserController($app['user.manager'], $app['user.options']);
+            $controller->setEmailConfirmationRequired($app['user.options']['emailConfirmation']['required']);
+
+            return $controller;
+        });
+
+        $app['user.mailer'] = $app->share(function($app) use (&$warning) {
+            $app['user.options.init']();
+
+            $missingDeps = array();
+            if (!isset($app['mailer'])) $missingDeps[] = 'SwiftMailerServiceProvider';
+            if (!isset($app['url_generator'])) $missingDeps[] = 'UrlGeneratorServiceProvider';
+            if (!isset($app['twig'])) $missingDeps[] = 'TwigServiceProvider';
+            if (!empty($missingDeps)) {
+                throw new \RuntimeException('To access the SimpleUser mailer you must enable the following missing dependencies: ' . implode(', ', $missingDeps));
+            }
+
+            $mailer = new Mailer($app['mailer'], $app['url_generator'], $app['twig']);
+            $mailer->setFromAddress($app['user.options']['mailer']['fromEmail']['address'] ?: null);
+            $mailer->setFromName($app['user.options']['mailer']['fromEmail']['name'] ?: null);
+            $mailer->setConfirmationTemplate($app['user.options']['emailConfirmation']['template']);
+            $mailer->setResetTemplate($app['user.options']['passwordReset']['template']);
+            $mailer->setResetTokenTtl($app['user.options']['passwordReset']['tokenTTL']);
+            if (!$app['user.options']['mailer']['enabled']) {
+                $mailer->setNoSend(true);
+            }
+
+            return $mailer;
         });
 
         // Add a custom security voter to support testing user attributes.
@@ -57,7 +142,6 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             $voters[] = new EditUserVoter($roleHierarchyVoter);
             return $voters;
         });
-
     }
 
     /**
@@ -70,10 +154,36 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
     public function boot(Application $app)
     {
         // Add twig template path.
-        if ($app->offsetExists('twig.loader.filesystem')) {
+        if (isset($app['twig.loader.filesystem'])) {
             $app['twig.loader.filesystem']->addPath(__DIR__ . '/views/', 'user');
         }
 
+        $app['user.options.init']();
+        if ($app['user.options']['emailConfirmation']['required']) {
+            if (!$app['user.mailer']) {
+                throw new \RuntimeException('Invalid configuration. Cannot require email confirmation because user mailer is not available.');
+            }
+            if (!$app['user.options']['mailer']['fromEmail']['address']) {
+                throw new \RuntimeException('Invalid configuration. Mailer fromEmail address is required when email confirmation is required.');
+            }
+        }
+
+        // Get the last authentication exception thrown for the given request.
+        // A replacement for $app['security.last_error']
+        // Exactly the same except it returns the whole exception instead of just $exception->getMessage()
+        $app['user.last_auth_exception'] = $app->protect(function (Request $request) {
+            if ($request->attributes->has(SecurityContextInterface::AUTHENTICATION_ERROR)) {
+                return $request->attributes->get(SecurityContextInterface::AUTHENTICATION_ERROR);
+            }
+
+            $session = $request->getSession();
+            if ($session && $session->has(SecurityContextInterface::AUTHENTICATION_ERROR)) {
+                $error = $session->get(SecurityContextInterface::AUTHENTICATION_ERROR);
+                $session->remove(SecurityContextInterface::AUTHENTICATION_ERROR);
+
+                return $error;
+            }
+        });
     }
 
     /**
@@ -124,6 +234,12 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
 
         $controllers->get('/login', 'user.controller:loginAction')
             ->bind('user.login');
+
+        $controllers->get('/confirm-email/{token}', 'user.controller:confirmEmailAction')
+            ->bind('user.confirm-email');
+
+        $controllers->post('/resend-confirmation', 'user.controller:resendConfirmationAction')
+            ->bind('user.resend-confirmation');
 
         // login_check and logout are dummy routes so we can use the names.
         // The security provider should intercept these, so no controller is needed.

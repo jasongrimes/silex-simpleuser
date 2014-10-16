@@ -1,0 +1,22 @@
+{% extends layout_template  %}
+
+{% block title %}Email confirmation needed{% endblock %}
+
+{% block content %}
+
+    <h1>Confirmation needed</h1>
+
+    <p>An email has been sent to you at <strong>{{ email }}</strong>.</p>
+
+    <p>Please click the link in that message to confirm your email address and activate your account.</p>
+
+    <div style="margin: 20px 0px;">
+        <form method="POST" action="{{ resendUrl }}">
+            <input type="hidden" name="email" value="{{ email }}">
+            <button type="submit" class="btn btn-default">Resend the message</button>
+        </form>
+    </div>
+
+    <p>Make sure to check your junk or spam folder. The sender is <strong>{{ fromAddress }}</strong>.</p>
+
+{% endblock %}
