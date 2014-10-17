@@ -3,12 +3,22 @@
 {% block title %}{{ user.displayName }}{% endblock %}
 
 {% block content %}
-
 <div class="media">
     <img class="media-object pull-left" src="{{ imageUrl }}" width="80" height="80">
 
     <div class="media-body">
-        <h1 class="media-heading">{{ user.displayName }}</h1>
+
+        <h1 class="media-heading">
+            {{ user.displayName }}
+        </h1>
+
+        {% if not user.isEnabled %}
+            <div style="margin-bottom: 5px;">
+                <span class="label label-danger">Pending email confirmation</span>
+                <span class="text-muted">(visible to admins only)</span>
+            </div>
+        {% endif %}
+
 
         {% if is_granted('EDIT_USER', user) %}
             <div class="text-muted">

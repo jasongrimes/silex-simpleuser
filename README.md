@@ -150,7 +150,7 @@ Config options
         ),
 
         'mailer' => array(
-            'enabled' => true, // Set to false to disable sending email notifications.
+            'enabled' => true, // When false, email notifications are not sent (they're silently discarded).
             'fromEmail' => array(
                 'address' => 'support@example.com',
                 'name' => 'Your Organization',

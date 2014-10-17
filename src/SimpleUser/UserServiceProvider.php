@@ -8,14 +8,8 @@ use Silex\ControllerProviderInterface;
 use Silex\ControllerCollection;
 use Silex\ServiceControllerResolver;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
-use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\Security\Core\AuthenticationEvents;
 use Symfony\Component\Security\Core\Authorization\Voter\RoleHierarchyVoter;
-use Symfony\Component\Security\Core\Event\AuthenticationEvent;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use \Swift_Mailer;
-use Symfony\Component\Security\Core\Exception\DisabledException;
 use Symfony\Component\Security\Core\SecurityContextInterface;
 
 class UserServiceProvider implements ServiceProviderInterface, ControllerProviderInterface
@@ -32,6 +26,7 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
      */
     public function register(Application $app)
     {
+        // Default options.
         $app['user.options.default'] = array(
             'userClass' => 'SimpleUser\User',
 
@@ -55,9 +50,9 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             ),
 
             'mailer' => array(
-                'enabled' => true, // Set to false to disable sending email notifications.
+                'enabled' => true, // When false, email notifications are not sent (they're silently discarded).
                 'fromEmail' => array(
-                    'address' => null,
+                    'address' => 'robots@' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : gethostname()),
                     'name' => null,
                 ),
             ),
@@ -74,6 +69,7 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             ),
         );
 
+        // Initialize $app['user.options'].
         $app['user.options.init'] = $app->protect(function() use ($app) {
             $options = $app['user.options.default'];
             if (isset($app['user.options'])) {
@@ -82,8 +78,10 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             $app['user.options'] = $options;
         });
 
+        // Token generator.
         $app['user.tokenGenerator'] = $app->share(function($app) { return new TokenGenerator($app['logger']); });
 
+        // User manager.
         $app['user.manager'] = $app->share(function($app) {
             $app['user.options.init']();
 
@@ -94,10 +92,12 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             return $userManager;
         });
 
+        // Current user.
         $app['user'] = $app->share(function($app) {
             return ($app['user.manager']->getCurrentUser());
         });
 
+        // Controller service.
         $app['user.controller'] = $app->share(function ($app) {
             $app['user.options.init']();
 
@@ -107,7 +107,8 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             return $controller;
         });
 
-        $app['user.mailer'] = $app->share(function($app) use (&$warning) {
+        // User mailer.
+        $app['user.mailer'] = $app->share(function($app) {
             $app['user.options.init']();
 
             $missingDeps = array();
@@ -142,12 +143,29 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             $voters[] = new EditUserVoter($roleHierarchyVoter);
             return $voters;
         });
+
+        // Helper function to get the last authentication exception thrown for the given request.
+        // It does the same thing as $app['security.last_error'](),
+        // except it returns the whole exception instead of just $exception->getMessage()
+        $app['user.last_auth_exception'] = $app->protect(function (Request $request) {
+            if ($request->attributes->has(SecurityContextInterface::AUTHENTICATION_ERROR)) {
+                return $request->attributes->get(SecurityContextInterface::AUTHENTICATION_ERROR);
+            }
+
+            $session = $request->getSession();
+            if ($session && $session->has(SecurityContextInterface::AUTHENTICATION_ERROR)) {
+                $exception = $session->get(SecurityContextInterface::AUTHENTICATION_ERROR);
+                $session->remove(SecurityContextInterface::AUTHENTICATION_ERROR);
+
+                return $exception;
+            }
+        });
     }
 
     /**
      * Bootstraps the application.
      *
-     * This method is called after all services are registers
+     * This method is called after all services are registered
      * and should be used for "dynamic" configuration (whenever
      * a service must be requested).
      */
@@ -158,32 +176,17 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             $app['twig.loader.filesystem']->addPath(__DIR__ . '/views/', 'user');
         }
 
+        // Validate the mailer configuration.
         $app['user.options.init']();
         if ($app['user.options']['emailConfirmation']['required']) {
             if (!$app['user.mailer']) {
                 throw new \RuntimeException('Invalid configuration. Cannot require email confirmation because user mailer is not available.');
             }
-            if (!$app['user.options']['mailer']['fromEmail']['address']) {
-                throw new \RuntimeException('Invalid configuration. Mailer fromEmail address is required when email confirmation is required.');
-            }
+        }
+        if ($app['user.options']['mailer']['enabled'] && !$app['user.options']['mailer']['fromEmail']['address']) {
+            throw new \RuntimeException('Invalid configuration. Mailer fromEmail address is required when mailer is enabled.');
         }
 
-        // Get the last authentication exception thrown for the given request.
-        // A replacement for $app['security.last_error']
-        // Exactly the same except it returns the whole exception instead of just $exception->getMessage()
-        $app['user.last_auth_exception'] = $app->protect(function (Request $request) {
-            if ($request->attributes->has(SecurityContextInterface::AUTHENTICATION_ERROR)) {
-                return $request->attributes->get(SecurityContextInterface::AUTHENTICATION_ERROR);
-            }
-
-            $session = $request->getSession();
-            if ($session && $session->has(SecurityContextInterface::AUTHENTICATION_ERROR)) {
-                $error = $session->get(SecurityContextInterface::AUTHENTICATION_ERROR);
-                $session->remove(SecurityContextInterface::AUTHENTICATION_ERROR);
-
-                return $error;
-            }
-        });
     }
 
     /**
@@ -232,11 +235,11 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         $controllers->method('GET|POST')->match('/register', 'user.controller:registerAction')
             ->bind('user.register');
 
-        $controllers->get('/login', 'user.controller:loginAction')
-            ->bind('user.login');
-
         $controllers->get('/confirm-email/{token}', 'user.controller:confirmEmailAction')
             ->bind('user.confirm-email');
+
+        $controllers->get('/login', 'user.controller:loginAction')
+            ->bind('user.login');
 
         $controllers->post('/resend-confirmation', 'user.controller:resendConfirmationAction')
             ->bind('user.resend-confirmation');

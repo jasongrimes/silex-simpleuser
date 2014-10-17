@@ -360,10 +360,22 @@ class UserManager implements UserProviderInterface
             }
         }
 
+        // Custom join for "isEnabled",
+        // which is only false if it's explicitly set to false (and therefore true if it's missing).
+        if (isset($criteria['isEnabled'])) {
+            $sql .= 'LEFT JOIN user_custom_fields enabled_field ';
+            $sql .= 'ON users.id = enabled_field.user_id ';
+            $sql .= 'AND enabled_field.attribute = "su:isEnabled" ';
+        }
+
         $first_crit = true;
         foreach ($criteria as $key => $val) {
             if ($key == 'customFields') {
                 continue;
+            } else if ($key == 'isEnabled') {
+                $sql .= ($first_crit ? 'WHERE' : 'AND') . ' ';
+                if ($val) $sql .= '(enabled_field.value = 1 OR enabled_field.value IS NULL) ';
+                else $sql .= 'enabled_field.value = 0 ';
             } else {
                 $sql .= ($first_crit ? 'WHERE' : 'AND') . ' ' . $key . ' = :' . $key . ' ';
                 $params[$key] = $val;

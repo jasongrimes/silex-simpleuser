@@ -174,7 +174,7 @@ class UserController
     }
 
     /**
-     * Handle email confirmation links.
+     * Action to handle email confirmation links.
      *
      * @param Application $app
      * @param Request $request
@@ -211,6 +211,8 @@ class UserController
     {
         $authException = $app['user.last_auth_exception']($request);
         if ($authException instanceof DisabledException) {
+            // Warning: Be careful not to disclose any user information besides the email address at this point.
+            // The Security system throws this exception before actually checking if the password was valid.
             $user = $this->userManager->refreshUser($authException->getUser());
 
             return $app['twig']->render($this->confirmationNeededTemplate, array(
@@ -229,6 +231,14 @@ class UserController
         ));
     }
 
+    /**
+     * Action to resend an email confirmation message.
+     *
+     * @param Application $app
+     * @param Request $request
+     * @return mixed
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     */
     public function resendConfirmationAction(Application $app, Request $request)
     {
         $email = $request->request->get('email');
@@ -294,6 +304,10 @@ class UserController
 
         if (!$user) {
             throw new NotFoundHttpException('No user was found with that ID.');
+        }
+
+        if (!$user->isEnabled() && !$app['security']->isGranted('ROLE_ADMIN')) {
+            throw new NotFoundHttpException('That user is disabled (pending email confirmation).');
         }
 
         return $app['twig']->render($this->viewTemplate, array(
@@ -395,11 +409,16 @@ class UserController
         $page = (int)($request->get('page') ?: 1);
         $offset = ($page - 1) * $limit;
 
-        $users = $this->userManager->findBy(array(), array(
+        $criteria = array();
+        if (!$app['security']->isGranted('ROLE_ADMIN')) {
+            $criteria['isEnabled'] = true;
+        }
+
+        $users = $this->userManager->findBy($criteria, array(
             'limit' => array($offset, $limit),
             'order_by' => array($order_by, $order_dir),
         ));
-        $numResults = $this->userManager->findCount();
+        $numResults = $this->userManager->findCount($criteria);
 
         $paginator = new Paginator($numResults, $limit, $page,
             $app['url_generator']->generate('user.list') . '?page=(:num)&limit=' . $limit . '&order_by=' . $order_by . '&order_dir=' . $order_dir

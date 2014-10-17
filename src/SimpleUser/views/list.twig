@@ -26,6 +26,12 @@
                     <a href="{{ path('user.view', {'id': user.id}) }}">{{ user.displayName }}</a>
                 </h4>
 
+                {% if not user.isEnabled %}
+                    <div>
+                        <span class="label label-danger">Pending email confirmation</span>
+                    </div>
+                {% endif %}
+
                 {% if is_granted('ROLE_ADMIN') %}
                     <div class="text-muted">
                         {{ user.email }}
