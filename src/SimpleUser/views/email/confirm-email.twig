@@ -2,31 +2,31 @@
 Template for an email message sent to confirm an email address.
 Variables passed to this template:
     user: The SimpleUser\User instance.
-    confirmationUrl: The link to click to confirm the email.
+    confirmationUrl: The link to click to complete the confirmation process.
 #}
 
 {# The subject line. #}
-{%- block subject -%}
-    {%- autoescape false -%}
-        Welcome! Please confirm your email.
-    {%- endautoescape -%}
-{%- endblock -%}
+{%- block subject -%}{%- autoescape false -%}
+    Welcome! Please confirm your email.
+{%- endautoescape -%}{%- endblock -%}
 
 {# The plain text message. #}
-{%- block body_text -%}
-    {%- autoescape false -%}
+{%- block body_text -%}{%- autoescape false -%}
+
 Thanks for joining our site!
 
 Please click the link below to confirm your email:
 {{ confirmationUrl }}
-    {%- endautoescape -%}
-{%- endblock -%}
+
+{%- endautoescape -%}{%- endblock -%}
 
 {# The HTML message. Optional. #}
 {%- block body_html -%}
+
     <h1>Thanks for joining our site!</h1>
 
     <p>
         Please <a href="{{ confirmationUrl }}">click here to confirm your email</a>.
     </p>
+
 {%- endblock -%}

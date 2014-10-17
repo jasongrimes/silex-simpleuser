@@ -125,6 +125,10 @@ Make the new account an administrator by editing the record directly in the data
 Config options
 --------------
 
+All of these config options are _optional_.
+You can use SimpleUser without configuring it at all.
+Sensible defaults will be used for options that are not specified.
+
     $app['user.options'] = array(
         // Custom user class
         'userClass' => 'My\User',
@@ -136,16 +140,28 @@ Config options
         // Custom templates
         'layoutTemplate'   => 'layout.twig',
         'loginTemplate'    => 'login.twig',
-        'registerTemplate' => 'register.twig',
-        'registerConfirmationSentTemplate' => 'registerConfirmationSent.twig',
         'viewTemplate'     => 'view.twig',
         'editTemplate'     => 'edit.twig',
         'listTemplate'     => 'list.twig',
 
         // Controller options
         'controllers' => array(
+            'register' => array(
+                'template' => '@user/register.twig',
+                'confirmationSentTemplate' => '@user/register-confirmation-sent.twig',
+            ),
+            'login' => array(
+                'template' => '@user/login.twig',
+                'confirmationNeededTemplate' => '@user/confirmation-needed.twig',
+            ),
+            'forgot-password' => array(
+                'template' => '@user/forgot-password.twig',
+            ),
+            'reset-password' => array(
+                'template' => '@user/reset-password.twig',
+            ),
             'edit' => array(
-                'customFields' => array('field' => 'Label'),
+                'customFields' => array(),
             ),
         ),
 

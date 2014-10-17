@@ -24,7 +24,7 @@
         <form class="form-horizontal" method="POST" action="{{ path('user.login_check') }}">
 
             <div class="form-group">
-                <label class="col-sm-2 control-label" for="inputEmail">Email or username</label>
+                <label class="col-sm-2 control-label" for="inputEmail">Email</label>
                 <div class="col-sm-6">
                     <input class="form-control" name="_username" type="text" id="inputEmail" placeholder="Email" required value="{{ last_username }}">
                 </div>
@@ -41,11 +41,20 @@
                 <div class="form-group">
                     <div class="col-sm-6 col-sm-offset-2 checkbox">
                         <label>
-                            <input type="checkbox" name="_remember_me" value="true" checked> Remember me
+                            <input type="checkbox" name="_remember_me" value="true" checked> Remember me on this computer
                         </label>
                     </div>
                 </div>
             {% endif %}
+
+            <div class="form-group">
+                <div class="col-sm-8 col-sm-offset-2">
+                    <button type="submit" class="btn btn-primary">Sign in</button>
+                    {% if allowPasswordReset %}
+                        <a style="margin-left: 10px;" href="{{ path('user.forgot-password') }}">Forgot your password?</a>
+                    {% endif %}
+                </div>
+            </div>
 
         </form>
 

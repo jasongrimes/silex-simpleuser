@@ -24,7 +24,6 @@ class UserController
     protected $layoutTemplate = '@user/layout.twig';
     protected $loginTemplate = '@user/login.twig';
     protected $registerTemplate = '@user/register.twig';
-    protected $registerConfirmationSentTemplate = '@user/register-confirmation-sent.twig';
     protected $confirmationNeededTemplate = '@user/confirmation-needed.twig';
     protected $viewTemplate = '@user/view.twig';
     protected $editTemplate = '@user/edit.twig';
@@ -32,6 +31,7 @@ class UserController
 
     protected $isUsernameRequired = false;
     protected $isEmailConfirmationRequired = false;
+    protected $isPasswordResetEnabled = true;
 
     protected $controllerOptions = array();
 
@@ -60,8 +60,7 @@ class UserController
      */
     public function setOptions(array $options)
     {
-        foreach (array('layoutTemplate', 'loginTemplate', 'registerTemplate', 'registerConfirmationSentTemplate',
-                     'viewTemplate', 'editTemplate', 'listTemplate', 'isUsernameRequired')
+        foreach (array('layoutTemplate', 'loginTemplate', 'registerTemplate', 'viewTemplate', 'editTemplate', 'listTemplate', 'isUsernameRequired')
                  as $property)
         {
             if (array_key_exists($property, $options)) {
@@ -139,20 +138,21 @@ class UserController
                     $user->setConfirmationToken($app['user.tokenGenerator']->generateToken());
                 }
                 $this->userManager->insert($user);
-                $app['session']->getFlashBag()->set('alert', 'Account created.');
 
                 if ($this->isEmailConfirmationRequired) {
                     // Send email confirmation.
                     $app['user.mailer']->sendConfirmationMessage($user);
 
                     // Render the "go check your email" page.
-                    return $app['twig']->render($this->registerConfirmationSentTemplate, array(
+                    return $app['twig']->render($this->controllerOptions['register']['confirmationSentTemplate'], array(
                         'layout_template' => $this->layoutTemplate,
                         'email' => $user->getEmail(),
                     ));
                 } else {
                     // Log the user in to the new account.
                     $this->userManager->loginAsUser($user);
+
+                    $app['session']->getFlashBag()->set('alert', 'Account created.');
 
                     // Redirect to user's new profile page.
                     return $app->redirect($app['url_generator']->generate('user.view', array('id' => $user->getId())));
@@ -186,7 +186,9 @@ class UserController
     {
         $user = $this->userManager->findOneBy(array('customFields' => array('su:confirmationToken' => $token)));
         if (!$user) {
-            throw new NotFoundHttpException('Invalid confirmation token. Please check the link and try again.');
+            $app['session']->getFlashBag()->set('alert', 'Sorry, your email confirmation link has expired.');
+
+            return $app->redirect($app['url_generator']->generate('user.login'));
         }
 
         $user->setConfirmationToken(null);
@@ -228,6 +230,7 @@ class UserController
             'error' => $authException ? $authException->getMessage() : null, // $app['security.last_error']($request),
             'last_username' => $app['session']->get('_security.last_username'),
             'allowRememberMe' => isset($app['security.remember_me.response_listener']),
+            'allowPasswordReset' => $this->isPasswordResetEnabled(),
         ));
     }
 
@@ -244,7 +247,7 @@ class UserController
         $email = $request->request->get('email');
         $user = $this->userManager->findOneBy(array('email' => $email));
         if (!$user) {
-            throw new NotFoundHttpException('No user found with that email address.');
+            throw new NotFoundHttpException('No user account was found with that email address.');
         }
 
         if (!$user->getConfirmationToken()) {
@@ -255,9 +258,100 @@ class UserController
         $app['user.mailer']->sendConfirmationMessage($user);
 
         // Render the "go check your email" page.
-        return $app['twig']->render($this->registerConfirmationSentTemplate, array(
+        return $app['twig']->render($this->controllerOptions['register']['confirmationSentTemplate'], array(
             'layout_template' => $this->layoutTemplate,
             'email' => $user->getEmail(),
+        ));
+    }
+
+    public function forgotPasswordAction(Application $app, Request $request)
+    {
+        if (!$this->isPasswordResetEnabled()) {
+            throw new NotFoundHttpException('Password resetting is not enabled.');
+        }
+
+        $error = null;
+
+        if ($request->isMethod('POST')) {
+            $email = $request->request->get('email');
+            $user = $this->userManager->findOneBy(array('email' => $email));
+            if ($user) {
+                // Initialize and send the password reset request.
+                $user->setTimePasswordResetRequested(time());
+                if (!$user->getConfirmationToken()) {
+                    $user->setConfirmationToken($app['user.tokenGenerator']->generateToken());
+                }
+                $this->userManager->update($user);
+
+                $app['user.mailer']->sendResetMessage($user);
+                $app['session']->getFlashBag()->set('alert', 'Instructions for resetting your password have been emailed to you.');
+                $app['session']->set('_security.last_username', $email);
+
+                return $app->redirect($app['url_generator']->generate('user.login'));
+            }
+            $error = 'No user account was found with that email address.';
+
+        } else {
+            $email = $request->request->get('email') ?: ($request->query->get('email') ?: $app['session']->get('_security.last_username'));
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $email = '';
+        }
+
+        return $app['twig']->render($this->controllerOptions['forgot-password']['template'], array(
+            'layout_template' => $this->layoutTemplate,
+            'email' => $email,
+            'fromAddress' => $app['user.mailer']->getFromAddress(),
+            'error' => $error,
+        ));
+    }
+
+    public function resetPasswordAction(Application $app, Request $request, $token)
+    {
+        if (!$this->isPasswordResetEnabled()) {
+            throw new NotFoundHttpException('Password resetting is not enabled.');
+        }
+
+        $tokenExpired = false;
+
+        $user = $this->userManager->findOneBy(array('customFields' => array('su:confirmationToken' => $token)));
+        if (!$user) {
+            $tokenExpired = true;
+        } else if ($user->isPasswordResetRequestExpired($app['user.options']['passwordReset']['tokenTTL'])) {
+            $tokenExpired = true;
+        }
+
+        if ($tokenExpired) {
+            $app['session']->getFlashBag()->set('alert', 'Sorry, your password reset link has expired.');
+            return $app->redirect($app['url_generator']->generate('user.login'));
+        }
+
+        $error = '';
+        if ($request->isMethod('POST')) {
+            // Validate the password
+            $password = $request->request->get('password');
+            if ($password != $request->request->get('confirm_password')) {
+                $error = 'Passwords don\'t match.';
+            } else if ($error = $this->userManager->validatePasswordStrength($password)) {
+                ;
+            } else {
+                // Set the password and log in.
+                $this->userManager->setUserPassword($user, $password);
+                $user->setConfirmationToken(null);
+                $user->setEnabled(true);
+                $this->userManager->update($user);
+
+                $this->userManager->loginAsUser($user);
+
+                $app['session']->getFlashBag()->set('alert', 'Your password has been reset and you are now signed in.');
+
+                return $app->redirect($app['url_generator']->generate('user.view', array('id' => $user->getId())));
+            }
+        }
+
+        return $app['twig']->render($this->controllerOptions['reset-password']['template'], array(
+            'layout_template' => $this->layoutTemplate,
+            'user' => $user,
+            'token' => $token,
+            'error' => $error,
         ));
     }
 
@@ -441,6 +535,22 @@ class UserController
             'firstResult' => $paginator->getCurrentPageFirstItem(),
             'lastResult' => $paginator->getCurrentPageLastItem(),
         ));
+    }
+
+    /**
+     * @param boolean $passwordResetEnabled
+     */
+    public function setPasswordResetEnabled($passwordResetEnabled)
+    {
+        $this->isPasswordResetEnabled = (bool) $passwordResetEnabled;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isPasswordResetEnabled()
+    {
+        return $this->isPasswordResetEnabled;
     }
 
 }

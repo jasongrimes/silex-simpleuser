@@ -34,6 +34,7 @@ use \Twig_Environment;
 class Mailer
 {
     const ROUTE_CONFIRM_EMAIL = 'user.confirm-email';
+    const ROUTE_RESET_PASSWORD = 'user.reset-password';
 
     /** @var \Swift_Mailer */
     protected $mailer;
@@ -150,6 +151,18 @@ class Mailer
         );
 
         $this->sendMessage($this->confirmationTemplate, $context, $this->getFromEmail(), $user->getEmail());
+    }
+
+    public function sendResetMessage(User $user)
+    {
+        $url = $this->urlGenerator->generate(self::ROUTE_RESET_PASSWORD, array('token' => $user->getConfirmationToken()), true);
+
+        $context = array(
+            'user' => $user,
+            'resetUrl' => $url
+        );
+
+        $this->sendMessage($this->resetTemplate, $context, $this->getFromEmail(), $user->getEmail());
     }
 
     /**

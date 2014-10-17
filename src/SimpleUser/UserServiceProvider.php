@@ -37,13 +37,25 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             'layoutTemplate'   => '@user/layout.twig',
             'loginTemplate'    => '@user/login.twig',
             'registerTemplate' => '@user/register.twig',
-            'registerConfirmationSentTemplate' => '@user/register-confirmation-sent.twig',
-            'confirmationNeededTemplate' => '@user/confirmation-needed.twig',
             'viewTemplate'     => '@user/view.twig',
             'editTemplate'     => '@user/edit.twig',
             'listTemplate'     => '@user/list.twig',
 
             'controllers' => array(
+                'register' => array(
+                    'template' => '@user/register.twig',
+                    'confirmationSentTemplate' => '@user/register-confirmation-sent.twig',
+                ),
+                'login' => array(
+                    'template' => '@user/login.twig',
+                    'confirmationNeededTemplate' => '@user/confirmation-needed.twig',
+                ),
+                'forgot-password' => array(
+                    'template' => '@user/forgot-password.twig',
+                ),
+                'reset-password' => array(
+                    'template' => '@user/reset-password.twig',
+                ),
                 'edit' => array(
                     'customFields' => array(),
                 ),
@@ -52,7 +64,7 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             'mailer' => array(
                 'enabled' => true, // When false, email notifications are not sent (they're silently discarded).
                 'fromEmail' => array(
-                    'address' => 'robots@' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : gethostname()),
+                    'address' => 'do-not-reply@' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : gethostname()),
                     'name' => null,
                 ),
             ),
@@ -178,13 +190,21 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
 
         // Validate the mailer configuration.
         $app['user.options.init']();
-        if ($app['user.options']['emailConfirmation']['required']) {
-            if (!$app['user.mailer']) {
-                throw new \RuntimeException('Invalid configuration. Cannot require email confirmation because user mailer is not available.');
-            }
+        try {
+            $mailer = $app['user.mailer'];
+            $mailerExists = true;
+        } catch (\RuntimeException $e) {
+            $mailerExists = false;
+            $mailerError = $e->getMessage();
+        }
+        if ($app['user.options']['emailConfirmation']['required'] && !$mailerExists) {
+            throw new \RuntimeException('Invalid configuration. Cannot require email confirmation because user mailer is not available. ' . $mailerError);
         }
         if ($app['user.options']['mailer']['enabled'] && !$app['user.options']['mailer']['fromEmail']['address']) {
             throw new \RuntimeException('Invalid configuration. Mailer fromEmail address is required when mailer is enabled.');
+        }
+        if (!$mailerExists) {
+            $app['user.controller']->setPasswordResetEnabled(false);
         }
 
     }
@@ -238,11 +258,17 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         $controllers->get('/confirm-email/{token}', 'user.controller:confirmEmailAction')
             ->bind('user.confirm-email');
 
+        $controllers->post('/resend-confirmation', 'user.controller:resendConfirmationAction')
+            ->bind('user.resend-confirmation');
+
         $controllers->get('/login', 'user.controller:loginAction')
             ->bind('user.login');
 
-        $controllers->post('/resend-confirmation', 'user.controller:resendConfirmationAction')
-            ->bind('user.resend-confirmation');
+        $controllers->method('GET|POST')->match('/forgot-password', 'user.controller:forgotPasswordAction')
+            ->bind('user.forgot-password');
+
+        $controllers->get('/reset-password/{token}', 'user.controller:resetPasswordAction')
+            ->bind('user.reset-password');
 
         // login_check and logout are dummy routes so we can use the names.
         // The security provider should intercept these, so no controller is needed.

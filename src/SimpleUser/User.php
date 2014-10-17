@@ -482,4 +482,39 @@ class User implements AdvancedUserInterface, \Serializable
     {
         return $this->getCustomField('su:confirmationToken');
     }
+
+    /**
+     * @param int $timestamp
+     * @throws \InvalidArgumentException if $timestamp is not an integer.
+     */
+    public function setTimePasswordResetRequested($timestamp)
+    {
+        if (!is_integer($timestamp)) {
+            throw new \InvalidArgumentException('Timestamp must be an integer.');
+        }
+
+        $this->setCustomField('su:timePasswordResetRequested', $timestamp);
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getTimePasswordResetRequested()
+    {
+        return $this->getCustomField('su:timePasswordResetRequested');
+    }
+
+    /**
+     * @param int $ttl Password reset request TTL, in seconds.
+     * @return bool
+     */
+    public function isPasswordResetRequestExpired($ttl)
+    {
+        $timeRequested = $this->getTimePasswordResetRequested();
+        if (!$timeRequested) {
+            return true;
+        }
+
+        return $timeRequested + $ttl < time();
+    }
 }

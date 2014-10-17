@@ -33,6 +33,9 @@ class UserManager implements UserProviderInterface
     /** @var bool */
     protected $isUsernameRequired = false;
 
+    /** @var Callable */
+    protected $passwordStrengthValidator;
+
     /**
      * Constructor.
      *
@@ -200,6 +203,59 @@ class UserManager implements UserProviderInterface
     public function setUserPassword(User $user, $password)
     {
         $user->setPassword($this->encodeUserPassword($user, $password));
+    }
+
+    /**
+     * Test whether a plain text password is strong enough.
+     *
+     * Note that controllers must call this explicitly,
+     * it's NOT called automatically when setting a password or validating a user.
+     *
+     * This is just a proxy for the Callable set by setPasswordStrengthValidator().
+     * If no password strength validator Callable is explicitly set,
+     * by default the only requirement is that the password not be empty.
+     *
+     * @param $password
+     * @return string|null An error message if validation fails, null if validation succeeds.
+     */
+    public function validatePasswordStrength($password)
+    {
+        return call_user_func($this->getPasswordStrengthValidator(), $password);
+    }
+
+    /**
+     * @return callable
+     */
+    public function getPasswordStrengthValidator()
+    {
+        if (!is_callable($this->passwordStrengthValidator)) {
+            return function($password) {
+                if (empty($password)) {
+                    return 'Password cannot be empty.';
+                }
+
+                return null;
+            };
+        }
+
+        return $this->passwordStrengthValidator;
+    }
+
+    /**
+     * Specify a callable to test whether a given password is strong enough.
+     *
+     * Must return an error string on failure, and null on success.
+     *
+     * @param Callable $callable
+     * @throws \InvalidArgumentException
+     */
+    public function setPasswordStrengthValidator($callable)
+    {
+        if (!is_callable($callable)) {
+            throw new \InvalidArgumentException('Password strength validator must be Callable.');
+        }
+
+        $this->passwordStrengthValidator = $callable;
     }
 
     /**
