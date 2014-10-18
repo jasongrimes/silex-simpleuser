@@ -74,7 +74,6 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
                 'template' => '@user/email/confirm-email.twig',
             ),
 
-            // Password reset options.
             'passwordReset' => array(
                 'template' => '@user/email/reset-password.twig',
                 'tokenTTL' => 86400, // How many seconds the reset token is valid for. Default: 1 day.

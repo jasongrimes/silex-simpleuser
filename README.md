@@ -126,25 +126,24 @@ Config options
 --------------
 
 All of these config options are _optional_.
-You can use SimpleUser without configuring it at all.
-Sensible defaults will be used for options that are not specified.
+You can use SimpleUser without defining any configuration at all,
+or you can customize one or more of the following options.
+The default values are shown below.
 
     $app['user.options'] = array(
-        // Custom user class
-        'userClass' => 'My\User',
+        'userClass' => 'SimpleUser\User',
 
         // Whether to require that users have a username (default: false).
         // By default, users sign in with their email address instead.
         'isUsernameRequired' => false,
 
-        // Custom templates
-        'layoutTemplate'   => 'layout.twig',
-        'loginTemplate'    => 'login.twig',
-        'viewTemplate'     => 'view.twig',
-        'editTemplate'     => 'edit.twig',
-        'listTemplate'     => 'list.twig',
+        'layoutTemplate'   => '@user/layout.twig',
+        'loginTemplate'    => '@user/login.twig',
+        'registerTemplate' => '@user/register.twig',
+        'viewTemplate'     => '@user/view.twig',
+        'editTemplate'     => '@user/edit.twig',
+        'listTemplate'     => '@user/list.twig',
 
-        // Controller options
         'controllers' => array(
             'register' => array(
                 'template' => '@user/register.twig',
@@ -168,20 +167,18 @@ Sensible defaults will be used for options that are not specified.
         'mailer' => array(
             'enabled' => true, // When false, email notifications are not sent (they're silently discarded).
             'fromEmail' => array(
-                'address' => 'support@example.com',
-                'name' => 'Your Organization',
+                'address' => 'do-not-reply@' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : gethostname()),
+                'name' => null,
             ),
         ),
 
-        // Email confirmation options.
         'emailConfirmation' => array(
             'required' => false, // Whether to require email confirmation before enabling new accounts.
-            'template' => 'email/confirm-email.twig',
+            'template' => '@user/email/confirm-email.twig',
         ),
 
-        // Password reset options.
         'passwordReset' => array(
-            'template' => 'email/reset-password.twig',
+            'template' => '@user/email/reset-password.twig',
             'tokenTTL' => 86400, // How many seconds the reset token is valid for. Default: 1 day.
         ),
     );
