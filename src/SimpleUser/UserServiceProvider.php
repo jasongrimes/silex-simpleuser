@@ -29,6 +29,8 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         // Default options.
         $app['user.options.default'] = array(
             'userClass' => 'SimpleUser\User',
+            'userTableName' => "users",
+            'userCustomFieldsTableName' => "user_custom_fields",
 
             // Whether to require that users have a username (default: false).
             // By default, users sign in with their email address instead.
@@ -99,6 +101,8 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             $userManager = new UserManager($app['db'], $app);
             $userManager->setUserClass($app['user.options']['userClass']);
             $userManager->setUsernameRequired($app['user.options']['isUsernameRequired']);
+            $userManager->setUserTableName($app['user.options']['userTableName']);
+            $userManager->setUserCustomFieldsTableName($app['user.options']['userCustomFieldsTableName']);
 
             return $userManager;
         });
