@@ -14,8 +14,6 @@ use Symfony\Component\Security\Core\SecurityContextInterface;
 
 class UserServiceProvider implements ServiceProviderInterface, ControllerProviderInterface
 {
-    protected $warnings = array();
-
     /**
      * Registers services on the given app.
      *
@@ -28,39 +26,22 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
     {
         // Default options.
         $app['user.options.default'] = array(
-            'userClass' => 'SimpleUser\User',
 
-            // Whether to require that users have a username (default: false).
-            // By default, users sign in with their email address instead.
-            'isUsernameRequired' => false,
-
-            'layoutTemplate'   => '@user/layout.twig',
-            'loginTemplate'    => '@user/login.twig',
-            'registerTemplate' => '@user/register.twig',
-            'viewTemplate'     => '@user/view.twig',
-            'editTemplate'     => '@user/edit.twig',
-            'listTemplate'     => '@user/list.twig',
-
-            'controllers' => array(
-                'register' => array(
-                    'template' => '@user/register.twig',
-                    'confirmationSentTemplate' => '@user/register-confirmation-sent.twig',
-                ),
-                'login' => array(
-                    'template' => '@user/login.twig',
-                    'confirmationNeededTemplate' => '@user/confirmation-needed.twig',
-                ),
-                'forgot-password' => array(
-                    'template' => '@user/forgot-password.twig',
-                ),
-                'reset-password' => array(
-                    'template' => '@user/reset-password.twig',
-                ),
-                'edit' => array(
-                    'customFields' => array(),
-                ),
+            // Specify custom view templates here.
+            'templates' => array(
+                'layout' => '@user/layout.twig',
+                'register' => '@user/register.twig',
+                'register-confirmation-sent' => '@user/register-confirmation-sent.twig',
+                'login' => '@user/login.twig',
+                'login-confirmation-needed' => '@user/login-confirmation-needed.twig',
+                'forgot-password' => '@user/forgot-password.twig',
+                'reset-password' => '@user/reset-password.twig',
+                'view' => '@user/view.twig',
+                'edit' => '@user/edit.twig',
+                'list' => '@user/list.twig',
             ),
 
+            // Configure the user mailer for sending password reset and email confirmation messages.
             'mailer' => array(
                 'enabled' => true, // When false, email notifications are not sent (they're silently discarded).
                 'fromEmail' => array(
@@ -78,13 +59,44 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
                 'template' => '@user/email/reset-password.twig',
                 'tokenTTL' => 86400, // How many seconds the reset token is valid for. Default: 1 day.
             ),
+
+            // Set this to use a custom User class.
+            'userClass' => 'SimpleUser\User',
+
+            // Whether to require that users have a username (default: false).
+            // By default, users sign in with their email address instead.
+            'isUsernameRequired' => false,
+
+            // A list of custom fields to support in the edit controller.
+            'editCustomFields' => array(),
         );
 
         // Initialize $app['user.options'].
         $app['user.options.init'] = $app->protect(function() use ($app) {
             $options = $app['user.options.default'];
             if (isset($app['user.options'])) {
+                // Merge default and configured options
                 $options = array_replace_recursive($options, $app['user.options']);
+
+                // Migrate deprecated options for backward compatibility
+                if (isset($app['user.options']['layoutTemplate']) && !isset($app['user.options']['templates']['layout'])) {
+                    $options['templates']['layout'] = $app['user.options']['layoutTemplate'];
+                }
+                if (isset($app['user.options']['loginTemplate']) && !isset($app['user.options']['templates']['login'])) {
+                    $options['templates']['login'] = $app['user.options']['loginTemplate'];
+                }
+                if (isset($app['user.options']['registerTemplate']) && !isset($app['user.options']['templates']['register'])) {
+                    $options['templates']['register'] = $app['user.options']['registerTemplate'];
+                }
+                if (isset($app['user.options']['viewTemplate']) && !isset($app['user.options']['templates']['view'])) {
+                    $options['templates']['view'] = $app['user.options']['viewTemplate'];
+                }
+                if (isset($app['user.options']['editTemplate']) && !isset($app['user.options']['templates']['edit'])) {
+                    $options['templates']['edit'] = $app['user.options']['editTemplate'];
+                }
+                if (isset($app['user.options']['listTemplate']) && !isset($app['user.options']['templates']['list'])) {
+                    $options['templates']['list'] = $app['user.options']['listTemplate'];
+                }
             }
             $app['user.options'] = $options;
         });
@@ -108,12 +120,15 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             return ($app['user.manager']->getCurrentUser());
         });
 
-        // Controller service.
+        // User controller service.
         $app['user.controller'] = $app->share(function ($app) {
             $app['user.options.init']();
 
-            $controller = new UserController($app['user.manager'], $app['user.options']);
+            $controller = new UserController($app['user.manager']);
+            $controller->setUsernameRequired($app['user.options']['isUsernameRequired']);
             $controller->setEmailConfirmationRequired($app['user.options']['emailConfirmation']['required']);
+            $controller->setTemplates($app['user.options']['templates']);
+            $controller->setEditCustomFields($app['user.options']['editCustomFields']);
 
             return $controller;
         });
@@ -205,7 +220,6 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         if (!$mailerExists) {
             $app['user.controller']->setPasswordResetEnabled(false);
         }
-
     }
 
     /**

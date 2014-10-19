@@ -23,12 +23,11 @@ Quick start example config
 
 This configuration should work out of the box to get you up and running quickly. See below for additional details.
 
-Install with composer:
+Install with composer. This command will automatically install the latest stable version:
 
-    composer require "jasongrimes/silex-simpleuser:~1.0"
+    composer require jasongrimes/silex-simpleuser
 
 Set up your Silex application something like this:
-
 
     <?php
 
@@ -125,45 +124,28 @@ Make the new account an administrator by editing the record directly in the data
 Config options
 --------------
 
-All of these config options are _optional_.
-You can use SimpleUser without defining any configuration at all,
+All of these options are _optional_.
+SimpleUser can work without any configuration at all,
 or you can customize one or more of the following options.
 The default values are shown below.
 
     $app['user.options'] = array(
-        'userClass' => 'SimpleUser\User',
 
-        // Whether to require that users have a username (default: false).
-        // By default, users sign in with their email address instead.
-        'isUsernameRequired' => false,
-
-        'layoutTemplate'   => '@user/layout.twig',
-        'loginTemplate'    => '@user/login.twig',
-        'registerTemplate' => '@user/register.twig',
-        'viewTemplate'     => '@user/view.twig',
-        'editTemplate'     => '@user/edit.twig',
-        'listTemplate'     => '@user/list.twig',
-
-        'controllers' => array(
-            'register' => array(
-                'template' => '@user/register.twig',
-                'confirmationSentTemplate' => '@user/register-confirmation-sent.twig',
-            ),
-            'login' => array(
-                'template' => '@user/login.twig',
-                'confirmationNeededTemplate' => '@user/confirmation-needed.twig',
-            ),
-            'forgot-password' => array(
-                'template' => '@user/forgot-password.twig',
-            ),
-            'reset-password' => array(
-                'template' => '@user/reset-password.twig',
-            ),
-            'edit' => array(
-                'customFields' => array(),
-            ),
+        // Specify custom view templates here.
+        'templates' => array(
+            'layout' => '@user/layout.twig',
+            'register' => '@user/register.twig',
+            'register-confirmation-sent' => '@user/register-confirmation-sent.twig',
+            'login' => '@user/login.twig',
+            'login-confirmation-needed' => '@user/login-confirmation-needed.twig',
+            'forgot-password' => '@user/forgot-password.twig',
+            'reset-password' => '@user/reset-password.twig',
+            'view' => '@user/view.twig',
+            'edit' => '@user/edit.twig',
+            'list' => '@user/list.twig',
         ),
 
+        // Configure the user mailer for sending password reset and email confirmation messages.
         'mailer' => array(
             'enabled' => true, // When false, email notifications are not sent (they're silently discarded).
             'fromEmail' => array(
@@ -181,8 +163,17 @@ The default values are shown below.
             'template' => '@user/email/reset-password.twig',
             'tokenTTL' => 86400, // How many seconds the reset token is valid for. Default: 1 day.
         ),
-    );
 
+        // Set this to use a custom User class.
+        'userClass' => 'SimpleUser\User',
+
+        // Whether to require that users have a username (default: false).
+        // By default, users sign in with their email address instead.
+        'isUsernameRequired' => false,
+
+        // A list of custom fields to support in the edit controller.
+        'editCustomFields' => array(),
+    );
 
 More information
 ----------------

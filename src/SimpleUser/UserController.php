@@ -5,11 +5,10 @@ namespace SimpleUser;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Security\Core\Exception\DisabledException;
 use InvalidArgumentException;
 use JasonGrimes\Paginator;
-use Symfony\Component\Security\Core\Exception\DisabledException;
 
 /**
  * Controller with actions for handling form-based authentication and user management.
@@ -21,104 +20,63 @@ class UserController
     /** @var UserManager */
     protected $userManager;
 
-    protected $layoutTemplate = '@user/layout.twig';
-    protected $loginTemplate = '@user/login.twig';
-    protected $registerTemplate = '@user/register.twig';
-    protected $confirmationNeededTemplate = '@user/confirmation-needed.twig';
-    protected $viewTemplate = '@user/view.twig';
-    protected $editTemplate = '@user/edit.twig';
-    protected $listTemplate = '@user/list.twig';
+    protected $templates = array(
+        'layout' => '@user/layout.twig',
+        'register' => '@user/register.twig',
+        'register-confirmation-sent' => '@user/register-confirmation-sent.twig',
+        'login' => '@user/login.twig',
+        'login-confirmation-needed' => '@user/login-confirmation-needed.twig',
+        'forgot-password' => '@user/forgot-password.twig',
+        'reset-password' => '@user/reset-password.twig',
+        'view' => '@user/view.twig',
+        'edit' => '@user/edit.twig',
+        'list' => '@user/list.twig',
+    );
+
+    // Custom fields to support in the editAction().
+    protected $editCustomFields = array();
 
     protected $isUsernameRequired = false;
     protected $isEmailConfirmationRequired = false;
     protected $isPasswordResetEnabled = true;
 
-    protected $controllerOptions = array();
-
     /**
      * Constructor.
      *
      * @param UserManager $userManager
-     * @param array $options
+     * @param array $deprecated - Deprecated. No longer used.
      */
-    public function __construct(UserManager $userManager, $options = array())
+    public function __construct(UserManager $userManager, $deprecated = null)
     {
         $this->userManager = $userManager;
-
-        if (!empty($options)) {
-            $this->setOptions($options);
-        }
-    }
-
-    public function setEmailConfirmationRequired($isRequired)
-    {
-        $this->isEmailConfirmationRequired = (bool) $isRequired;
     }
 
     /**
-     * @param array $options
+     * @param string $key
+     * @param string $template
      */
-    public function setOptions(array $options)
+    public function setTemplate($key, $template)
     {
-        foreach (array('layoutTemplate', 'loginTemplate', 'registerTemplate', 'viewTemplate', 'editTemplate', 'listTemplate', 'isUsernameRequired')
-                 as $property)
-        {
-            if (array_key_exists($property, $options)) {
-                $this->$property = $options[$property];
-            }
-        }
+        $this->templates[$key] = $template;
+    }
 
-        if (array_key_exists('controllers', $options)) {
-            $this->controllerOptions = $options['controllers'];
+    /**
+     * @param array $templates
+     */
+    public function setTemplates(array $templates)
+    {
+        foreach ($templates as $key => $val) {
+            $this->setTemplate($key, $val);
         }
     }
 
     /**
-     * @param string $layoutTemplate
+     * @param string $key
+     * @return string|null
      */
-    public function setLayoutTemplate($layoutTemplate)
+    public function getTemplate($key)
     {
-        $this->layoutTemplate = $layoutTemplate;
-    }
-
-    /**
-     * @param string $editTemplate
-     */
-    public function setEditTemplate($editTemplate)
-    {
-        $this->editTemplate = $editTemplate;
-    }
-
-    /**
-     * @param string $listTemplate
-     */
-    public function setListTemplate($listTemplate)
-    {
-        $this->listTemplate = $listTemplate;
-    }
-
-    /**
-     * @param string $loginTemplate
-     */
-    public function setLoginTemplate($loginTemplate)
-    {
-        $this->loginTemplate = $loginTemplate;
-    }
-
-    /**
-     * @param string $registerTemplate
-     */
-    public function setRegisterTemplate($registerTemplate)
-    {
-        $this->registerTemplate = $registerTemplate;
-    }
-
-    /**
-     * @param string $viewTemplate
-     */
-    public function setViewTemplate($viewTemplate)
-    {
-        $this->viewTemplate = $viewTemplate;
+        return $this->templates[$key];
     }
 
     /**
@@ -144,8 +102,8 @@ class UserController
                     $app['user.mailer']->sendConfirmationMessage($user);
 
                     // Render the "go check your email" page.
-                    return $app['twig']->render($this->controllerOptions['register']['confirmationSentTemplate'], array(
-                        'layout_template' => $this->layoutTemplate,
+                    return $app['twig']->render($this->getTemplate('register-confirmation-sent'), array(
+                        'layout_template' => $this->getTemplate('layout'),
                         'email' => $user->getEmail(),
                     ));
                 } else {
@@ -163,8 +121,8 @@ class UserController
             }
         }
 
-        return $app['twig']->render($this->registerTemplate, array(
-            'layout_template' => $this->layoutTemplate,
+        return $app['twig']->render($this->getTemplate('register'), array(
+            'layout_template' => $this->getTemplate('layout'),
             'error' => isset($error) ? $error : null,
             'name' => $request->request->get('name'),
             'email' => $request->request->get('email'),
@@ -217,16 +175,16 @@ class UserController
             // The Security system throws this exception before actually checking if the password was valid.
             $user = $this->userManager->refreshUser($authException->getUser());
 
-            return $app['twig']->render($this->confirmationNeededTemplate, array(
-                'layout_template' => $this->layoutTemplate,
+            return $app['twig']->render($this->getTemplate('login-confirmation-needed'), array(
+                'layout_template' => $this->getTemplate('layout'),
                 'email' => $user->getEmail(),
                 'fromAddress' => $app['user.mailer']->getFromAddress(),
                 'resendUrl' => $app['url_generator']->generate('user.resend-confirmation'),
             ));
         }
 
-        return $app['twig']->render($this->loginTemplate, array(
-            'layout_template' => $this->layoutTemplate,
+        return $app['twig']->render($this->getTemplate('login'), array(
+            'layout_template' => $this->getTemplate('layout'),
             'error' => $authException ? $authException->getMessage() : null, // $app['security.last_error']($request),
             'last_username' => $app['session']->get('_security.last_username'),
             'allowRememberMe' => isset($app['security.remember_me.response_listener']),
@@ -258,12 +216,18 @@ class UserController
         $app['user.mailer']->sendConfirmationMessage($user);
 
         // Render the "go check your email" page.
-        return $app['twig']->render($this->controllerOptions['register']['confirmationSentTemplate'], array(
-            'layout_template' => $this->layoutTemplate,
+        return $app['twig']->render($this->getTemplate('register-confirmation-sent'), array(
+            'layout_template' => $this->getTemplate('layout'),
             'email' => $user->getEmail(),
         ));
     }
 
+    /**
+     * @param Application $app
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     */
     public function forgotPasswordAction(Application $app, Request $request)
     {
         if (!$this->isPasswordResetEnabled()) {
@@ -296,14 +260,21 @@ class UserController
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $email = '';
         }
 
-        return $app['twig']->render($this->controllerOptions['forgot-password']['template'], array(
-            'layout_template' => $this->layoutTemplate,
+        return $app['twig']->render($this->getTemplate('forgot-password'), array(
+            'layout_template' => $this->getTemplate('layout'),
             'email' => $email,
             'fromAddress' => $app['user.mailer']->getFromAddress(),
             'error' => $error,
         ));
     }
 
+    /**
+     * @param Application $app
+     * @param Request $request
+     * @param string $token
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     */
     public function resetPasswordAction(Application $app, Request $request, $token)
     {
         if (!$this->isPasswordResetEnabled()) {
@@ -347,8 +318,8 @@ class UserController
             }
         }
 
-        return $app['twig']->render($this->controllerOptions['reset-password']['template'], array(
-            'layout_template' => $this->layoutTemplate,
+        return $app['twig']->render($this->getTemplate('reset-password'), array(
+            'layout_template' => $this->getTemplate('layout'),
             'user' => $user,
             'token' => $token,
             'error' => $error,
@@ -404,14 +375,18 @@ class UserController
             throw new NotFoundHttpException('That user is disabled (pending email confirmation).');
         }
 
-        return $app['twig']->render($this->viewTemplate, array(
-            'layout_template' => $this->layoutTemplate,
+        return $app['twig']->render($this->getTemplate('view'), array(
+            'layout_template' => $this->getTemplate('layout'),
             'user' => $user,
             'imageUrl' => $this->getGravatarUrl($user->getEmail()),
         ));
 
     }
 
+    /**
+     * @param Application $app
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     */
     public function viewSelfAction(Application $app) {
         if (!$app['user']) {
             return $app->redirect($app['url_generator']->generate('user.login'));
@@ -449,8 +424,7 @@ class UserController
             throw new NotFoundHttpException('No user was found with that ID.');
         }
 
-        $options = array_key_exists('edit', $this->controllerOptions) ? $this->controllerOptions['edit'] : array();
-        $customFields = array_key_exists('customFields', $options) ? $options['customFields'] : array();
+        $customFields = $this->editCustomFields ?: array();
 
         if ($request->isMethod('POST')) {
             $user->setName($request->request->get('name'));
@@ -484,8 +458,8 @@ class UserController
             }
         }
 
-        return $app['twig']->render($this->editTemplate, array(
-            'layout_template' => $this->layoutTemplate,
+        return $app['twig']->render($this->getTemplate('edit'), array(
+            'layout_template' => $this->getTemplate('layout'),
             'error' => implode("\n", $errors),
             'user' => $user,
             'available_roles' => array('ROLE_USER', 'ROLE_ADMIN'),
@@ -494,6 +468,17 @@ class UserController
             'isUsernameRequired' => $this->isUsernameRequired,
         ));
     }
+
+    /**
+     * Specify custom fields to support in the editAction().
+     *
+     * @param array $editCustomFields
+     */
+    public function setEditCustomFields(array $editCustomFields)
+    {
+        $this->editCustomFields = $editCustomFields;
+    }
+
 
     public function listAction(Application $app, Request $request)
     {
@@ -522,8 +507,8 @@ class UserController
             $user->imageUrl = $this->getGravatarUrl($user->getEmail(), 40);
         }
 
-        return $app['twig']->render($this->listTemplate, array(
-            'layout_template' => $this->layoutTemplate,
+        return $app['twig']->render($this->getTemplate('list'), array(
+            'layout_template' => $this->getTemplate('layout'),
             'users' => $users,
             'paginator' => $paginator,
 
@@ -553,4 +538,78 @@ class UserController
         return $this->isPasswordResetEnabled;
     }
 
+    /**
+     * @param bool $isUsernameRequired
+     */
+    public function setUsernameRequired($isUsernameRequired)
+    {
+        $this->isUsernameRequired = (bool) $isUsernameRequired;
+    }
+
+    public function setEmailConfirmationRequired($isRequired)
+    {
+        $this->isEmailConfirmationRequired = (bool) $isRequired;
+    }
+
+    // ---------------------------------------------------------------------------
+    //
+    // Deprecated methods.
+    //
+    // Retained for backwards compatibility.
+    //
+    // ---------------------------------------------------------------------------
+
+    /**
+     * @param string $layoutTemplate
+     * @deprecated Use setTemplate() or setTemplates() instead.
+     */
+    public function setLayoutTemplate($layoutTemplate)
+    {
+        $this->setTemplate('layout', $layoutTemplate);
+    }
+
+    /**
+     * @deprecated Use setTemplate() or setTemplates() instead.
+     * @param string $editTemplate
+     */
+    public function setEditTemplate($editTemplate)
+    {
+        $this->setTemplate('edit', $editTemplate);
+    }
+
+    /**
+     * @deprecated Use setTemplate() or setTemplates() instead.
+     * @param string $listTemplate
+     */
+    public function setListTemplate($listTemplate)
+    {
+        $this->setTemplate('list', $listTemplate);
+    }
+
+    /**
+     * @deprecated Use setTemplate() or setTemplates() instead.
+     * @param string $loginTemplate
+     */
+    public function setLoginTemplate($loginTemplate)
+    {
+        $this->setTemplate('login', $loginTemplate);
+    }
+
+    /**
+     * @deprecated Use setTemplate() or setTemplates() instead.
+     * @param string $registerTemplate
+     */
+    public function setRegisterTemplate($registerTemplate)
+    {
+        $this->setTemplate('register', $registerTemplate);
+    }
+
+    /**
+     * @deprecated Use setTemplate() or setTemplates() instead.
+     * @param string $viewTemplate
+     */
+    public function setViewTemplate($viewTemplate)
+    {
+        $this->setTemplate('view', $viewTemplate);
+    }
 }
