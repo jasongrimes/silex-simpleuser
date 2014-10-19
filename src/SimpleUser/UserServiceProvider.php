@@ -220,6 +220,10 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         if (!$mailerExists) {
             $app['user.controller']->setPasswordResetEnabled(false);
         }
+
+        if (isset($app['user.passwordStrengthValidator'])) {
+            $app['user.manager']->setPasswordStrengthValidator($app['user.passwordStrengthValidator']);
+        }
     }
 
     /**

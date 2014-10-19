@@ -386,4 +386,27 @@ class UserManagerTest extends \PHPUnit_Framework_TestCase
         $storedUser = $this->userManager->getUser($user->getId());
         $this->assertFalse($storedUser->hasCustomField('foo'));
     }
+
+    public function testPasswordStrengthValidator()
+    {
+        $user = new User('test@example.com');
+
+        // By default, an empty password is not allowed.
+        $error = $this->userManager->validatePasswordStrength($user, '');
+        $this->assertNotEmpty($error);
+
+        // By default, any non-empty password is allowed.
+        $error = $this->userManager->validatePasswordStrength($user, 'a');
+        $this->assertNull($error);
+
+        // Test setting a custom validator.
+        $this->userManager->setPasswordStrengthValidator(function(User $user, $password) {
+            if (strlen($password) < 2) {
+                return 'Password must have at least 2 characters.';
+            }
+        });
+
+        $error = $this->userManager->validatePasswordStrength($user, 'a');
+        $this->assertEquals('Password must have at least 2 characters.', $error);
+    }
 }

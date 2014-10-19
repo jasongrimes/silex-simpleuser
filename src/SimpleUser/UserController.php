@@ -91,6 +91,9 @@ class UserController
         if ($request->isMethod('POST')) {
             try {
                 $user = $this->createUserFromRequest($request);
+                if ($error = $this->userManager->validatePasswordStrength($user, $request->request->get('password'))) {
+                    throw new InvalidArgumentException($error);
+                }
                 if ($this->isEmailConfirmationRequired) {
                     $user->setEnabled(false);
                     $user->setConfirmationToken($app['user.tokenGenerator']->generateToken());
@@ -301,7 +304,7 @@ class UserController
             $password = $request->request->get('password');
             if ($password != $request->request->get('confirm_password')) {
                 $error = 'Passwords don\'t match.';
-            } else if ($error = $this->userManager->validatePasswordStrength($password)) {
+            } else if ($error = $this->userManager->validatePasswordStrength($user, $password)) {
                 ;
             } else {
                 // Set the password and log in.
@@ -435,6 +438,8 @@ class UserController
             if ($request->request->get('password')) {
                 if ($request->request->get('password') != $request->request->get('confirm_password')) {
                     $errors['password'] = 'Passwords don\'t match.';
+                } else if ($error = $this->userManager->validatePasswordStrength($user, $request->request->get('password'))) {
+                    $errors['password'] = $error;
                 } else {
                     $this->userManager->setUserPassword($user, $request->request->get('password'));
                 }

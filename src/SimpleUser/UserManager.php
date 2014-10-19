@@ -215,12 +215,13 @@ class UserManager implements UserProviderInterface
      * If no password strength validator Callable is explicitly set,
      * by default the only requirement is that the password not be empty.
      *
+     * @param User $user
      * @param $password
      * @return string|null An error message if validation fails, null if validation succeeds.
      */
-    public function validatePasswordStrength($password)
+    public function validatePasswordStrength(User $user, $password)
     {
-        return call_user_func($this->getPasswordStrengthValidator(), $password);
+        return call_user_func($this->getPasswordStrengthValidator(), $user, $password);
     }
 
     /**
@@ -229,7 +230,7 @@ class UserManager implements UserProviderInterface
     public function getPasswordStrengthValidator()
     {
         if (!is_callable($this->passwordStrengthValidator)) {
-            return function($password) {
+            return function(User $user, $password) {
                 if (empty($password)) {
                     return 'Password cannot be empty.';
                 }
@@ -244,7 +245,8 @@ class UserManager implements UserProviderInterface
     /**
      * Specify a callable to test whether a given password is strong enough.
      *
-     * Must return an error string on failure, and null on success.
+     * Must take a User instance and a password string as arguments,
+     * and return an error string on failure or null on success.
      *
      * @param Callable $callable
      * @throws \InvalidArgumentException
