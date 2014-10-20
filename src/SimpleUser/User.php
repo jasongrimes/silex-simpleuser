@@ -13,7 +13,6 @@ class User implements AdvancedUserInterface, \Serializable
 {
     protected $id;
     protected $email;
-    protected $username;
     protected $password;
     protected $salt;
     protected $roles = array();
@@ -183,7 +182,7 @@ class User implements AdvancedUserInterface, \Serializable
      */
     public function getUsername()
     {
-        return $this->username ?: $this->email;
+        return $this->getCustomField('username') ?: $this->email;
     }
 
     /**
@@ -196,7 +195,7 @@ class User implements AdvancedUserInterface, \Serializable
      */
     public function getRealUsername()
     {
-        return $this->username;
+        return $this->getCustomField('username');
     }
 
     /**
@@ -206,7 +205,7 @@ class User implements AdvancedUserInterface, \Serializable
      */
     public function hasRealUsername()
     {
-        return $this->username;
+        return $this->hasCustomField('username');
     }
 
     /**
@@ -215,7 +214,7 @@ class User implements AdvancedUserInterface, \Serializable
     public function setUsername($username)
     {
         // Stored as a custom field for backward compatibility.
-        $this->username = $username;
+        $this->setCustomField('username', $username);
     }
 
     /**

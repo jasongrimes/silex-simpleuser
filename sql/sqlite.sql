@@ -8,8 +8,6 @@ CREATE TABLE users (
   time_created INT NOT NULL DEFAULT 0
 );
 
-alter table users add username varchar(100) DEFAULT NULL;
-
 
 CREATE TABLE user_custom_fields (
   user_id INT(11) NOT NULL,
