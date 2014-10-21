@@ -649,12 +649,9 @@ class UserManager implements UserProviderInterface
         return $this->isUsernameRequired;
     }
 
-
-
-
     public function setUserTableName($userTableName)
     {
-        $this->userTableName =  $userTableName;
+        $this->userTableName = $userTableName;
     }
 
     public function getUserTableName()
@@ -665,7 +662,7 @@ class UserManager implements UserProviderInterface
 
     public function setUserCustomFieldsTableName($userCustomFieldsTableName)
     {
-        $this->userCustomFieldsTableName =  $userCustomFieldsTableName;
+        $this->userCustomFieldsTableName = $userCustomFieldsTableName;
     }
 
     public function getUserCustomFieldsTableName()

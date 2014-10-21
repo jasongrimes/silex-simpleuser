@@ -27,9 +27,6 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
         // Default options.
         $app['user.options.default'] = array(
 
-            'userTableName' => "users",
-            'userCustomFieldsTableName' => "user_custom_fields",
-
             // Specify custom view templates here.
             'templates' => array(
                 'layout' => '@user/layout.twig',
@@ -72,6 +69,10 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
 
             // A list of custom fields to support in the edit controller.
             'editCustomFields' => array(),
+
+            // Override table names, if necessary.
+            'userTableName' => 'users',
+            'userCustomFieldsTableName' => 'user_custom_fields',
         );
 
         // Initialize $app['user.options'].
