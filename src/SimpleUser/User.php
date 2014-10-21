@@ -18,6 +18,11 @@ class User implements AdvancedUserInterface, \Serializable
     protected $roles = array();
     protected $name = '';
     protected $timeCreated;
+    protected $username;
+    protected $isEnabled = true;
+    protected $confirmationToken;
+    protected $timePasswordResetRequested;
+
     protected $customFields = array();
 
     /**
@@ -182,7 +187,7 @@ class User implements AdvancedUserInterface, \Serializable
      */
     public function getUsername()
     {
-        return $this->getCustomField('username') ?: $this->email;
+        return $this->username ?: $this->email;
     }
 
     /**
@@ -195,7 +200,7 @@ class User implements AdvancedUserInterface, \Serializable
      */
     public function getRealUsername()
     {
-        return $this->getCustomField('username');
+        return $this->username;
     }
 
     /**
@@ -205,7 +210,7 @@ class User implements AdvancedUserInterface, \Serializable
      */
     public function hasRealUsername()
     {
-        return $this->hasCustomField('username');
+        return !is_null($this->username);
     }
 
     /**
@@ -213,8 +218,7 @@ class User implements AdvancedUserInterface, \Serializable
      */
     public function setUsername($username)
     {
-        // Stored as a custom field for backward compatibility.
-        $this->setCustomField('username', $username);
+        $this->username = $username;
     }
 
     /**
@@ -456,11 +460,7 @@ class User implements AdvancedUserInterface, \Serializable
      */
     public function isEnabled()
     {
-        if ($this->hasCustomField('su:isEnabled') && !$this->getCustomField('su:isEnabled')) {
-            return false;
-        }
-
-        return true;
+        return $this->isEnabled;
     }
 
     /**
@@ -470,30 +470,30 @@ class User implements AdvancedUserInterface, \Serializable
      */
     public function setEnabled($isEnabled)
     {
-        $this->setCustomField('su:isEnabled', (bool) $isEnabled);
+        $this->isEnabled = (bool) $isEnabled;
     }
 
     public function setConfirmationToken($token)
     {
-        $this->setCustomField('su:confirmationToken', $token);
+        $this->confirmationToken = $token;
     }
 
     public function getConfirmationToken()
     {
-        return $this->getCustomField('su:confirmationToken');
+        return $this->confirmationToken;
     }
 
     /**
-     * @param int $timestamp
+     * @param int|null $timestamp
      * @throws \InvalidArgumentException if $timestamp is not an integer.
      */
     public function setTimePasswordResetRequested($timestamp)
     {
-        if (!is_integer($timestamp)) {
+        if (!is_integer($timestamp) && !is_null($timestamp)) {
             throw new \InvalidArgumentException('Timestamp must be an integer.');
         }
 
-        $this->setCustomField('su:timePasswordResetRequested', $timestamp);
+        $this->timePasswordResetRequested = $timestamp;
     }
 
     /**
@@ -501,7 +501,7 @@ class User implements AdvancedUserInterface, \Serializable
      */
     public function getTimePasswordResetRequested()
     {
-        return $this->getCustomField('su:timePasswordResetRequested');
+        return $this->timePasswordResetRequested;
     }
 
     /**

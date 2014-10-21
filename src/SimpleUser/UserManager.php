@@ -71,7 +71,7 @@ class UserManager implements UserProviderInterface
             return $user;
         }
 
-        $user = $this->findOneBy(array('customFields' => array('username' => $username)));
+        $user = $this->findOneBy(array('username' => $username));
         if (!$user) {
             throw new UsernameNotFoundException(sprintf('Username "%s" does not exist.', $username));
         }
@@ -123,6 +123,7 @@ class UserManager implements UserProviderInterface
     {
         $userClass = $this->getUserClass();
 
+        /** @var User $user */
         $user = new $userClass($data['email']);
 
         $user->setId($data['id']);
@@ -133,6 +134,11 @@ class UserManager implements UserProviderInterface
             $user->setRoles($roles);
         }
         $user->setTimeCreated($data['time_created']);
+        $user->setUsername($data['username']);
+        $user->setEnabled($data['isEnabled']);
+        $user->setConfirmationToken($data['confirmationToken']);
+        $user->setTimePasswordResetRequested($data['timePasswordResetRequested']);
+
         if (!empty($data['customFields'])) {
             $user->setCustomFields($data['customFields']);
         }
@@ -418,22 +424,10 @@ class UserManager implements UserProviderInterface
             }
         }
 
-        // Custom join for "isEnabled",
-        // which is only false if it's explicitly set to false (and therefore true if it's missing).
-        if (isset($criteria['isEnabled'])) {
-            $sql .= 'LEFT JOIN user_custom_fields enabled_field ';
-            $sql .= 'ON users.id = enabled_field.user_id ';
-            $sql .= 'AND enabled_field.attribute = "su:isEnabled" ';
-        }
-
         $first_crit = true;
         foreach ($criteria as $key => $val) {
             if ($key == 'customFields') {
                 continue;
-            } else if ($key == 'isEnabled') {
-                $sql .= ($first_crit ? 'WHERE' : 'AND') . ' ';
-                if ($val) $sql .= '(enabled_field.value = 1 OR enabled_field.value IS NULL) ';
-                else $sql .= 'enabled_field.value = 0 ';
             } else {
                 $sql .= ($first_crit ? 'WHERE' : 'AND') . ' ' . $key . ' = :' . $key . ' ';
                 $params[$key] = $val;
@@ -468,7 +462,8 @@ class UserManager implements UserProviderInterface
     {
         $this->dispatcher->dispatch(UserEvents::BEFORE_INSERT, new UserEvent($user));
 
-        $sql = 'INSERT INTO users (email, password, salt, name, roles, time_created) VALUES (:email, :password, :salt, :name, :roles, :timeCreated) ';
+        $sql = 'INSERT INTO users (email, password, salt, name, roles, time_created, username, isEnabled, confirmationToken, timePasswordResetRequested) ';
+        $sql .= 'VALUES (:email, :password, :salt, :name, :roles, :timeCreated, :username, :isEnabled, :confirmationToken, :timePasswordResetRequested) ';
 
         $params = array(
             'email' => $user->getEmail(),
@@ -477,6 +472,10 @@ class UserManager implements UserProviderInterface
             'name' => $user->getName(),
             'roles' => implode(',', $user->getRoles()),
             'timeCreated' => $user->getTimeCreated(),
+            'username' => $user->getRealUsername(),
+            'isEnabled' => $user->isEnabled(),
+            'confirmationToken' => $user->getConfirmationToken(),
+            'timePasswordResetRequested' => $user->getTimePasswordResetRequested(),
         );
 
         $this->conn->executeUpdate($sql, $params);
@@ -506,6 +505,10 @@ class UserManager implements UserProviderInterface
             , name = :name
             , roles = :roles
             , time_created = :timeCreated
+            , username = :username
+            , isEnabled = :isEnabled
+            , confirmationToken = :confirmationToken
+            , timePasswordResetRequested = :timePasswordResetRequested
             WHERE id = :id';
 
         $params = array(
@@ -515,6 +518,10 @@ class UserManager implements UserProviderInterface
             'name' => $user->getName(),
             'roles' => implode(',', $user->getRoles()),
             'timeCreated' => $user->getTimeCreated(),
+            'username' => $user->getUsername(),
+            'isEnabled' => $user->isEnabled(),
+            'confirmationToken' => $user->getConfirmationToken(),
+            'timePasswordResetRequested' => $user->getTimePasswordResetRequested(),
             'id' => $user->getId(),
         );
 
@@ -580,7 +587,7 @@ class UserManager implements UserProviderInterface
         }
 
         // Ensure username is unique.
-        $duplicates = $this->findBy(array('customFields' => array('username' => $user->getRealUsername())));
+        $duplicates = $this->findBy(array('username' => $user->getRealUsername()));
         if (!empty($duplicates)) {
             foreach ($duplicates as $dup) {
                 if ($user->getId() && $dup->getId() == $user->getId()) {

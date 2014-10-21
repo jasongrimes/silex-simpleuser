@@ -5,7 +5,11 @@ CREATE TABLE users (
   salt VARCHAR(255) NOT NULL DEFAULT '',
   roles VARCHAR(255) NOT NULL DEFAULT '',
   name VARCHAR(100) NOT NULL DEFAULT '',
-  time_created INT NOT NULL DEFAULT 0
+  time_created INT NOT NULL DEFAULT 0,
+  username VARCHAR(100) UNIQUE,
+  isEnabled INTEGER DEFAULT 1,
+  confirmationToken VARCHAR(100),
+  timePasswordResetRequested INT
 );
 
 

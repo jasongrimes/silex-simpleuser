@@ -145,7 +145,7 @@ class UserController
      */
     public function confirmEmailAction(Application $app, Request $request, $token)
     {
-        $user = $this->userManager->findOneBy(array('customFields' => array('su:confirmationToken' => $token)));
+        $user = $this->userManager->findOneBy(array('confirmationToken' => $token));
         if (!$user) {
             $app['session']->getFlashBag()->set('alert', 'Sorry, your email confirmation link has expired.');
 
@@ -286,7 +286,7 @@ class UserController
 
         $tokenExpired = false;
 
-        $user = $this->userManager->findOneBy(array('customFields' => array('su:confirmationToken' => $token)));
+        $user = $this->userManager->findOneBy(array('confirmationToken' => $token));
         if (!$user) {
             $tokenExpired = true;
         } else if ($user->isPasswordResetRequestExpired($app['user.options']['passwordReset']['tokenTTL'])) {
