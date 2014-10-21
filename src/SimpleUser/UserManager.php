@@ -390,7 +390,7 @@ class UserManager implements UserProviderInterface
     {
         $customFields = array();
 
-        $rows = $this->conn->fetchAll('SELECT * FROM ' . $this->app['db']->quoteIdentifier($this->userCustomFieldsTableName). ' WHERE user_id = ?', array($userId));
+        $rows = $this->conn->fetchAll('SELECT * FROM ' . $this->conn->quoteIdentifier($this->userCustomFieldsTableName). ' WHERE user_id = ?', array($userId));
         foreach ($rows as $row) {
             $customFields[$row['attribute']] = $row['value'];
         }
@@ -408,15 +408,15 @@ class UserManager implements UserProviderInterface
     {
         $params = array();
 
-        $sql = 'FROM ' . $this->app['db']->quoteIdentifier($this->userTableName). ' ';
+        $sql = 'FROM ' . $this->conn->quoteIdentifier($this->userTableName). ' ';
         // JOIN on custom fields, if needed.
         if (array_key_exists('customFields', $criteria)) {
             $i = 0;
             foreach ($criteria['customFields'] as $attribute => $value) {
                 $i++;
                 $alias = 'custom' . $i;
-                $sql .= 'JOIN ' . $this->app['db']->quoteIdentifier($this->userCustomFieldsTableName). ' ' . $alias . ' ';
-                $sql .= 'ON ' . $this->app['db']->quoteIdentifier($this->userTableName). '.id = ' . $alias . '.user_id ';
+                $sql .= 'JOIN ' . $this->conn->quoteIdentifier($this->userCustomFieldsTableName). ' ' . $alias . ' ';
+                $sql .= 'ON ' . $this->conn->quoteIdentifier($this->userTableName). '.id = ' . $alias . '.user_id ';
                 $sql .= 'AND ' . $alias . '.attribute = :attribute' . $i . ' ';
                 $sql .= 'AND ' . $alias . '.value = :value' . $i . ' ';
                 $params['attribute' . $i] = $attribute;
@@ -427,8 +427,8 @@ class UserManager implements UserProviderInterface
         // Custom join for "isEnabled",
         // which is only false if it's explicitly set to false (and therefore true if it's missing).
         if (isset($criteria['isEnabled'])) {
-            $sql .= 'LEFT JOIN ' . $this->app['db']->quoteIdentifier($this->userCustomFieldsTableName). ' enabled_field ';
-            $sql .= 'ON ' . $this->app['db']->quoteIdentifier($this->userTableName). '.id = enabled_field.user_id ';
+            $sql .= 'LEFT JOIN ' . $this->conn->quoteIdentifier($this->userCustomFieldsTableName). ' enabled_field ';
+            $sql .= 'ON ' . $this->conn->quoteIdentifier($this->userTableName). '.id = enabled_field.user_id ';
             $sql .= 'AND enabled_field.attribute = "su:isEnabled" ';
         }
 
@@ -474,7 +474,7 @@ class UserManager implements UserProviderInterface
     {
         $this->dispatcher->dispatch(UserEvents::BEFORE_INSERT, new UserEvent($user));
 
-        $sql = 'INSERT INTO ' . $this->app['db']->quoteIdentifier($this->userTableName). ' (email, password, salt, name, roles, time_created) VALUES (:email, :password, :salt, :name, :roles, :timeCreated) ';
+        $sql = 'INSERT INTO ' . $this->conn->quoteIdentifier($this->userTableName). ' (email, password, salt, name, roles, time_created) VALUES (:email, :password, :salt, :name, :roles, :timeCreated) ';
 
         $params = array(
             'email' => $user->getEmail(),
@@ -505,7 +505,7 @@ class UserManager implements UserProviderInterface
     {
         $this->dispatcher->dispatch(UserEvents::BEFORE_UPDATE, new UserEvent($user));
 
-        $sql = 'UPDATE ' . $this->app['db']->quoteIdentifier($this->userTableName). '
+        $sql = 'UPDATE ' . $this->conn->quoteIdentifier($this->userTableName). '
             SET email = :email
             , password = :password
             , salt = :salt
@@ -536,10 +536,10 @@ class UserManager implements UserProviderInterface
      */
     protected function saveUserCustomFields(User $user)
     {
-        $this->conn->executeUpdate('DELETE FROM ' . $this->app['db']->quoteIdentifier($this->userCustomFieldsTableName). ' WHERE user_id = ?', array($user->getId()));
+        $this->conn->executeUpdate('DELETE FROM ' . $this->conn->quoteIdentifier($this->userCustomFieldsTableName). ' WHERE user_id = ?', array($user->getId()));
 
         foreach ($user->getCustomFields() as $attribute => $value) {
-            $this->conn->executeUpdate('INSERT INTO ' . $this->app['db']->quoteIdentifier($this->userCustomFieldsTableName). ' (user_id, attribute, value) VALUES (?, ?, ?) ',
+            $this->conn->executeUpdate('INSERT INTO ' . $this->conn->quoteIdentifier($this->userCustomFieldsTableName). ' (user_id, attribute, value) VALUES (?, ?, ?) ',
                 array($user->getId(), $attribute, $value));
         }
     }
@@ -555,8 +555,8 @@ class UserManager implements UserProviderInterface
 
         $this->clearIdentityMap($user);
 
-        $this->conn->executeUpdate('DELETE FROM ' . $this->app['db']->quoteIdentifier($this->userTableName). ' WHERE id = ?', array($user->getId()));
-        $this->conn->executeUpdate('DELETE FROM ' . $this->app['db']->quoteIdentifier($this->userCustomFieldsTableName). ' WHERE user_id = ?', array($user->getId()));
+        $this->conn->executeUpdate('DELETE FROM ' . $this->conn->quoteIdentifier($this->userTableName). ' WHERE id = ?', array($user->getId()));
+        $this->conn->executeUpdate('DELETE FROM ' . $this->conn->quoteIdentifier($this->userCustomFieldsTableName). ' WHERE user_id = ?', array($user->getId()));
 
         $this->dispatcher->dispatch(UserEvents::AFTER_DELETE, new UserEvent($user));
     }
@@ -565,7 +565,7 @@ class UserManager implements UserProviderInterface
      * Validate a user object.
      *
      * Invokes User::validate(),
-     * and additionally tests that the User's email address and username (if set) are unique across all ' . $this->app['db']->quoteIdentifier($this->userTableName). '.
+     * and additionally tests that the User's email address and username (if set) are unique across all users.'.
      *
      * @param User $user
      * @return array An array of error messages, or an empty array if the User is valid.
