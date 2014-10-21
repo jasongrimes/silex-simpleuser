@@ -37,10 +37,10 @@ class UserManager implements UserProviderInterface
     protected $passwordStrengthValidator;
 
     /** @var string */
-    protected $userTableName;
+    protected $userTableName = 'users';
 
     /** @var string */
-    protected $userCustomFieldsTableName;
+    protected $userCustomFieldsTableName = 'user_custom_fields';
 
     /**
      * Constructor.
