@@ -173,6 +173,10 @@ The default values are shown below.
 
         // A list of custom fields to support in the edit controller.
         'editCustomFields' => array(),
+
+        // Override table names, if necessary.
+        'userTableName' => 'users',
+        'userCustomFieldsTableName' => 'user_custom_fields',
     );
 
 More information

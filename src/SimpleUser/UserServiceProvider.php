@@ -69,6 +69,10 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
 
             // A list of custom fields to support in the edit controller.
             'editCustomFields' => array(),
+
+            // Override table names, if necessary.
+            'userTableName' => 'users',
+            'userCustomFieldsTableName' => 'user_custom_fields',
         );
 
         // Initialize $app['user.options'].
@@ -111,6 +115,8 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             $userManager = new UserManager($app['db'], $app);
             $userManager->setUserClass($app['user.options']['userClass']);
             $userManager->setUsernameRequired($app['user.options']['isUsernameRequired']);
+            $userManager->setUserTableName($app['user.options']['userTableName']);
+            $userManager->setUserCustomFieldsTableName($app['user.options']['userCustomFieldsTableName']);
 
             return $userManager;
         });
