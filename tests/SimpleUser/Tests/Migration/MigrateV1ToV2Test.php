@@ -9,7 +9,7 @@ use SimpleUser\Migration\MigrateV1ToV2;
 use SimpleUser\UserManager;
 use SimpleUser\User;
 
-class MigrateDbFrom1To2Test extends \PHPUnit_Framework_TestCase
+class MigrateV1ToV2Test extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var Connection
