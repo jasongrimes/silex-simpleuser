@@ -3,31 +3,32 @@ Migrating the database between SimpleUser major versions
 
 ## Migrating from SimpleUser 1.x to 2.x
 
-In SimpleUser 1.x, newly added features stored data as custom fields instead of altering the users table,
+In SimpleUser 1.x, newly added features were stored data as custom fields instead of adding columns to the the users table,
 to avoid breaking backward compatibility.
 
-In version 2.0, these custom fields were moved into new columns in the users table.
-These custom fields were: username, su:isEnabled, su:confirmationToken, and su:timePasswordResetRequested.
+In version 2.0, those custom fields were moved into new columns in the users table.
+The custom fields moved were: username, su:isEnabled, su:confirmationToken, and su:timePasswordResetRequested.
 
 Changes made in version 2.0:
 - Add columns to the users table: username, isEnabled, confirmationToken, timePasswordResetRequested
 - Move data for those columns from custom fields to the users table, and delete those custom field rows.
 - Make the users.time_created column unsigned (to avoid the "year 2038 problem")
 
-Before migrating, make sure to back up your existing database. Ex. for mysql:
-
-    mysqldump -uroot -p --opt MYDB users user_custom_fields > users.sql
-
 A migration class is available to help migrate the database from version 1.x to 2.x,
-and to revert from 2.x back to 1.x: [SimpleUser\Migration\MigrateV1ToV2](src/SimpleUser/Migration/MigrateV1ToV2.php).
+and to revert from 2.x back to 1.x: [SimpleUser\Migration\MigrateV1ToV2](../src/SimpleUser/Migration/MigrateV1ToV2.php).
 
 The migration class supports altering the schema for two database platforms: mysql and sqlite.
 For other platforms, you can add the columns manually and then just migrate the data (see below).
-(Pull requests would be appreciated to add DDL for other platforms.)
+(Pull requests would be appreciated to add DDL statements for other platforms.)
 
 To run the migration, make a small script that exercises the migration class.
-You can just run the migration all at once (<code>$migrate->up();</code>),
-or you can print the SQL commands so that you can examine them and then run them yourself.
+You can just run the migration all at once,
+you can print the SQL commands so that you can examine them and then run them yourself,
+or you can make the database changes manually and just migrate the data.
+
+Before migrating, make sure to back up your existing database. Ex. for mysql:
+
+    mysqldump -uroot -p --opt MYDB users user_custom_fields > users.sql
 
 Running the migration:
 
