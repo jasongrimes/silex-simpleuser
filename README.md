@@ -17,6 +17,13 @@ Demo
 * [Online demo](http://silex-simpleuser-demo.grimesit.com/)
 * [Demo source code](https://github.com/jasongrimes/silex-simpleuser-demo)
 
+Upgrading
+=========
+
+If you're upgrading from a 1.x version,
+you'll need to migrate the database for version 2.0.
+Tools are provided to make this relatively painless.
+See [sql/MIGRATION.md](sql/MIGRATION.md) for details.
 
 Quick start example config
 --------------------------
