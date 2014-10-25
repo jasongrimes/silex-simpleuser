@@ -485,15 +485,10 @@ class User implements AdvancedUserInterface, \Serializable
 
     /**
      * @param int|null $timestamp
-     * @throws \InvalidArgumentException if $timestamp is not an integer.
      */
     public function setTimePasswordResetRequested($timestamp)
     {
-        if (!is_integer($timestamp) && !is_null($timestamp)) {
-            throw new \InvalidArgumentException('Timestamp must be an integer.');
-        }
-
-        $this->timePasswordResetRequested = $timestamp;
+        $this->timePasswordResetRequested = $timestamp ?: null;
     }
 
     /**
