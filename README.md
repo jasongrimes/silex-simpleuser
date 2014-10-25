@@ -116,6 +116,10 @@ Create the user database:
 
     mysql -uUSER -pPASSWORD MYDBNAME < vendor/jasongrimes/silex-simpleuser/sql/mysql.sql
 
+Note: if you're upgrading from SimpleUser 1.x,
+follow the instructions in [sql/MIGRATION.md](sql/MIGRATION.md) instead,
+to migrate the database without losing existing data.
+
 You should now be able to create an account at the `/user/register` URL.
 Make the new account an administrator by editing the record directly in the database and setting the `users.roles` column to `ROLE_USER,ROLE_ADMIN`.
 (After you have one admin account, it can grant the admin role to others via the web interface.)

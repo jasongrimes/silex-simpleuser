@@ -25,7 +25,13 @@ The migration class supports altering the schema for two database platforms: mys
 For other platforms, you can add the columns manually and then just migrate the data (see below).
 (Pull requests would be appreciated to add DDL for other platforms.)
 
+To run the migration, make a small script that exercises the migration class.
+You can just run the migration all at once (<code>$migrate->up();</code>),
+or you can print the SQL commands so that you can examine them and then run them yourself.
+
 Running the migration:
+
+    <?php
 
     // Set up the Doctrine DBAL Connection.
     // (The database user must have permission to ALTER the tables.)
