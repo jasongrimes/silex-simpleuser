@@ -3,7 +3,7 @@ Migrating the database between SimpleUser major versions
 
 ## Migrating from SimpleUser 1.x to 2.x
 
-In SimpleUser 1.x, newly added features were stored data as custom fields instead of adding columns to the the users table,
+In SimpleUser 1.x, newly added features were stored as custom fields instead of adding columns to the the users table,
 to avoid breaking backward compatibility.
 
 In version 2.0, those custom fields were moved into new columns in the users table.
