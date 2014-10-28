@@ -534,7 +534,7 @@ class UserManager implements UserProviderInterface
             'name' => $user->getName(),
             'roles' => implode(',', $user->getRoles()),
             'timeCreated' => $user->getTimeCreated(),
-            'username' => $user->getUsername(),
+            'username' => $user->getRealUsername(),
             'isEnabled' => $user->isEnabled(),
             'confirmationToken' => $user->getConfirmationToken(),
             'timePasswordResetRequested' => $user->getTimePasswordResetRequested(),
