@@ -20,9 +20,9 @@ Demo
 Upgrading
 ---------
 
-If you're upgrading from a 1.x version,
-you'll need to migrate the database for version 2.0.
-Tools are provided to make this relatively painless.
+If you're upgrading from 1.x,
+you'll need to update the database for version 2.0.
+Tools are provided to make this database migration relatively painless.
 See [sql/MIGRATION.md](sql/MIGRATION.md) for details.
 
 Quick start example config
