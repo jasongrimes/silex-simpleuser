@@ -124,9 +124,18 @@ class UserManager implements UserProviderInterface
      *
      * @param array $data
      * @return User
+     * @throws \RuntimeException if database schema is out of date.
      */
     protected function hydrateUser(array $data)
     {
+        // Test for new columns added in v2.0.
+        // If they're missing, throw an exception and explain that migration is needed.
+        foreach (array('username', 'isEnabled', 'confirmationToken', 'timePasswordResetRequested') as $col) {
+            if (!array_key_exists($col, $data)) {
+                throw new \RuntimeException('Internal error: database schema appears out of date. See https://github.com/jasongrimes/silex-simpleuser/blob/master/sql/MIGRATION.md');
+            }
+        }
+
         $userClass = $this->getUserClass();
 
         /** @var User $user */
