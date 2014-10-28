@@ -31,44 +31,62 @@ Before migrating, make sure to back up your existing database. Ex. for mysql:
     DBNAME=mydb
     mysqldump -uroot -p --opt $DBNAME users user_custom_fields > simpleuser-v1-bak.sql
 
-Running the migration:
+Create a script for setting up the migration. Create a `bin/migrate-bootstrap.php` script with the following content:
 
     <?php
-
+    /**
+     * Bootstrap for database migration.
+     *
+     * See https://github.com/jasongrimes/silex-simpleuser/edit/master/sql/MIGRATION.md
+     */
+    
+    require __DIR__ . '/../vendor/autoload.php';
+    
     // Set up the Doctrine DBAL Connection.
     // (The database user must have permission to ALTER the tables.)
     $app = new Silex\Application();
-    $app->register(new DoctrineServiceProvider());
+    $app->register(new Silex\Provider\DoctrineServiceProvider());
     
-    $app['db.options'] = array(...); 
-    
-    // Or get $app['db.options'] from your config file, if you have one, something like this: 
+    // Get $app['db.options'] from your config file, if you have one, something like this: 
     // require __DIR__ . '/../config/local.php';
+    
+    // Or, define $app['db.options'] explicitly:
+    $app['db.options'] = array(
+        'driver'   => 'pdo_mysql',
+        'dbname' => 'simpleuser_demo',
+        'host' => 'localhost',
+        'user' => '',
+        'password' => '',
+    );
 
     // Instantiate the migration class.
     // (If you're using custom table names for the "users" and "user_custom_fields" tables,
     // pass them as the optional second and third constructor arguments.)
     $migrate = new SimpleUser\Migration\MigrateV1toV2($app['db']);
 
-    // To upgrade the database from v1 to v2 (both the schema and the data format):
-    $migrate->up();
+Then, you can create simple one-liner migration scripts which include the bootstrap file,
+or you can just run them with `php -r`.
+
+To migrate up to version 2.0:
+
+    php -r 'require "migrate-bootstrap.php"; $migrate->up();'
 
 Reverting back to the previous version:
 
-    // To revert the schema and data from v2 back to v1:
-    $migrate->down();
+    # To revert the schema and data from v2 back to v1:
+    php -r 'require "migrate-bootstrap.php"; $migrate->down();'
 
 Printing the SQL instead of executing it:
 
-    // To just print the SQL commands that would be run by $migrate->up(), but not actually run them:
-    echo implode(";\n", $migrate->sqlUp());
+    # To just print the SQL commands that would be run by $migrate->up(), but not actually run them:
+    php -r 'require "migrate-bootstrap.php"; echo implode(";\n", $migrate->sqlUp());'
 
-    // To print the SQL commands that would be run by $migrate->down(), but not actually run them:
-    echo implode(";\n", $migrate->sqlDown());
+    # To print the SQL commands that would be run by $migrate->down(), but not actually run them:
+    php -r 'require "migrate-bootstrap.php"; echo implode(";\n", $migrate->sqlDown());'
 
 Migrating just the data (useful if you had to add the columns manually because your database platform is not supported):
 
-    // To just print the SQL commands for migrating the data, without ALTERing the table:
-    echo implode(";\n", $migrate->sqlUpData());
+    # To just print the SQL commands for migrating the data, without ALTERing the table:
+    php -r 'require "migrate-bootstrap.php"; echo implode(";\n", $migrate->sqlUpData());'
 
 
