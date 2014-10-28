@@ -73,20 +73,16 @@ To migrate up to version 2.0:
 
 Reverting back to the previous version:
 
-    # To revert the schema and data from v2 back to v1:
     php -r 'require "migrate-bootstrap.php"; $migrate->down();'
 
 Printing the SQL instead of executing it:
 
-    # To just print the SQL commands that would be run by $migrate->up(), but not actually run them:
     php -r 'require "migrate-bootstrap.php"; echo implode(";\n", $migrate->sqlUp());'
 
-    # To print the SQL commands that would be run by $migrate->down(), but not actually run them:
     php -r 'require "migrate-bootstrap.php"; echo implode(";\n", $migrate->sqlDown());'
 
 Migrating just the data (useful if you had to add the columns manually because your database platform is not supported):
 
-    # To just print the SQL commands for migrating the data, without ALTERing the table:
     php -r 'require "migrate-bootstrap.php"; echo implode(";\n", $migrate->sqlUpData());'
 
 
