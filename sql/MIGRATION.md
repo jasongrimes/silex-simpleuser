@@ -38,9 +38,12 @@ Running the migration:
     // Set up the Doctrine DBAL Connection.
     // (The database user must have permission to ALTER the tables.)
     $app = new Silex\Application();
-    $app->register(new DoctrineServiceProvider(), array(
-        'db.options' => array(...),
-    ));
+    $app->register(new DoctrineServiceProvider());
+    
+    $app['db.options'] = array(...); 
+    
+    // Or get $app['db.options'] from your config file, if you have one, something like this: 
+    // require __DIR__ . '/../config/local.php';
 
     // Instantiate the migration class.
     // (If you're using custom table names for the "users" and "user_custom_fields" tables,
