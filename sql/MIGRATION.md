@@ -28,7 +28,8 @@ or you can make the database changes manually and just migrate the data.
 
 Before migrating, make sure to back up your existing database. Ex. for mysql:
 
-    mysqldump -uroot -p --opt MYDB users user_custom_fields > users.sql
+    DBNAME=mydb
+    mysqldump -uroot -p --opt $DBNAME users user_custom_fields > simpleuser-v1-bak.sql
 
 Running the migration:
 
