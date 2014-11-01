@@ -62,7 +62,7 @@ Create a script for setting up the migration. Create a `bin/migrate-bootstrap.ph
     // Instantiate the migration class.
     // (If you're using custom table names for the "users" and "user_custom_fields" tables,
     // pass them as the optional second and third constructor arguments.)
-    $migrate = new SimpleUser\Migration\MigrateV1toV2($app['db']);
+    $migrate = new SimpleUser\Migration\MigrateV1ToV2($app['db']);
 
 Then, you can create simple one-liner migration scripts which include the bootstrap file,
 or you can just run them with `php -r`.
