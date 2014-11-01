@@ -173,7 +173,9 @@ class UserController
     public function loginAction(Application $app, Request $request)
     {
         $authException = $app['user.last_auth_exception']($request);
+
         if ($authException instanceof DisabledException) {
+            // This exception is thrown if (!$user->isEnabled())
             // Warning: Be careful not to disclose any user information besides the email address at this point.
             // The Security system throws this exception before actually checking if the password was valid.
             $user = $this->userManager->refreshUser($authException->getUser());
@@ -188,7 +190,7 @@ class UserController
 
         return $app['twig']->render($this->getTemplate('login'), array(
             'layout_template' => $this->getTemplate('layout'),
-            'error' => $authException ? $authException->getMessage() : null, // $app['security.last_error']($request),
+            'error' => $authException ? $authException->getMessageKey() : null,
             'last_username' => $app['session']->get('_security.last_username'),
             'allowRememberMe' => isset($app['security.remember_me.response_listener']),
             'allowPasswordReset' => $this->isPasswordResetEnabled(),
