@@ -97,6 +97,7 @@ Set up your Silex application something like this:
             'form' => array(
                 'login_path' => '/user/login',
                 'check_path' => '/user/login_check',
+                'csrf_provider' => 'form.csrf_provider',
             ),
             'logout' => array(
                 'logout_path' => '/user/logout',
