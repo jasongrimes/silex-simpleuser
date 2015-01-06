@@ -19,7 +19,8 @@
         "symfony/twig-bridge": "~2.3",
         "jasongrimes/paginator": "~1.0",
         "swiftmailer/swiftmailer": "~5.3",
-        "symfony/form": "~2.3"
+        "symfony/form": "~2.3",
+        "symfony/validator": "~2.3"
     },
     "require-dev": {
         "phpunit/phpunit": "~4.2",
