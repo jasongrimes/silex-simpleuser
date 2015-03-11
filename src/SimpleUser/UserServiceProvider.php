@@ -73,6 +73,25 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             // Override table names, if necessary.
             'userTableName' => 'users',
             'userCustomFieldsTableName' => 'user_custom_fields',
+
+            // Override column names if necessary.
+            'userColumns' => array(
+                'id' => 'id',
+                'email' => 'email',
+                'password' => 'password',
+                'salt' => 'salt',
+                'roles' => 'roles',
+                'name' => 'name',
+                'time_created' => 'time_created',
+                'username' => 'username',
+                'isEnabled' => 'isEnabled',
+                'confirmationToken' => 'confirmationToken',
+                'timePasswordResetRequested' => 'timePasswordResetRequested',
+                //Custom Fields
+                'user_id' => 'user_id',
+                'attribute' => 'attribute',
+                'value' => 'value',
+            ),
         );
 
         // Initialize $app['user.options'].
@@ -117,6 +136,7 @@ class UserServiceProvider implements ServiceProviderInterface, ControllerProvide
             $userManager->setUsernameRequired($app['user.options']['isUsernameRequired']);
             $userManager->setUserTableName($app['user.options']['userTableName']);
             $userManager->setUserCustomFieldsTableName($app['user.options']['userCustomFieldsTableName']);
+            $userManager->setUserColumns($app['user.options']['userColumns']);
 
             return $userManager;
         });

@@ -188,6 +188,25 @@ The default values are shown below.
         // Override table names, if necessary.
         'userTableName' => 'users',
         'userCustomFieldsTableName' => 'user_custom_fields',
+
+        //Override Column names, if necessary
+        'userColumns' = array(
+            'id' => 'id',
+            'email' => 'email',
+            'password' => 'password',
+            'salt' => 'salt',
+            'roles' => 'roles',
+            'name' => 'name',
+            'time_created' => 'time_created',
+            'username' => 'username',
+            'isEnabled' => 'isEnabled',
+            'confirmationToken' => 'confirmationToken',
+            'timePasswordResetRequested' => 'timePasswordResetRequested',
+            //Custom Fields
+            'user_id' => 'user_id',
+            'attribute' => 'attribute',
+            'value' => 'value',
+        ),
     );
 
 More information

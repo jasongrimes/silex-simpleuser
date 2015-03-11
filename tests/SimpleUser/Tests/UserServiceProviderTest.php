@@ -16,7 +16,12 @@ class UserServiceProviderTest extends \PHPUnit_Framework_TestCase
             array('security.firewalls' => array('dummy-firewall' => array('form' => array())))
         );
         $app->register(new Provider\DoctrineServiceProvider());
-        $app->register(new UserServiceProvider());
+        $app->register(new UserServiceProvider(), array(
+            'db.options' => array(
+                'driver' => 'pdo_sqlite',
+                'memory' => true,
+            ),
+        ));
 
         return $app;
     }

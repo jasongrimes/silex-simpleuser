@@ -409,4 +409,10 @@ class UserManagerTest extends \PHPUnit_Framework_TestCase
         $error = $this->userManager->validatePasswordStrength($user, 'a');
         $this->assertEquals('Password must have at least 2 characters.', $error);
     }
+
+    public function testChangeUserColumns()
+    {
+        $this->userManager->setUserColumns(array('email' => 'foo'));
+        $this->assertEquals('"foo"', $this->userManager->getUserColumns('email'));
+    }
 }
